@@ -1,5 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
+<<<<<<< HEAD
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+=======
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+>>>>>>> 69edae08ee50f45c471de3ca2de2b8cc4b30e522
 import { StatCard, TopBar, StatusBadge, Avatar, EmptyState } from '../components/UI'
 import { dashboardService, driversService, passengersService, ridesService, financeService, documentsService } from '../services/api'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
@@ -168,7 +172,20 @@ function PriceEstimator() {
   )
 }
 
+const TT = { background:'rgba(255,255,255,0.97)', border:'1.5px solid rgba(43,95,245,0.15)', borderRadius:10, boxShadow:'0 8px 24px rgba(43,95,245,0.12)', fontSize:12, fontFamily:'Plus Jakarta Sans,sans-serif', color:'#0D1B4B' }
+
+function DonutChart({ data, colors }) {
+  return (
+    <PieChart width={120} height={120}>
+      <Pie data={data} cx={55} cy={55} innerRadius={35} outerRadius={52} paddingAngle={3} dataKey="value" startAngle={90} endAngle={450}>
+        {data.map((_,i) => <Cell key={i} fill={colors[i]} stroke="none"/>)}
+      </Pie>
+    </PieChart>
+  )
+}
+
 export default function Dashboard() {
+<<<<<<< HEAD
   const [stats,      setStats]      = useState({})
   const [docs,       setDocs]       = useState([])
   const [rides,      setRides]      = useState([])
@@ -177,6 +194,16 @@ export default function Dashboard() {
   const [revenue,    setRevenue]    = useState({})
   const [chart,      setChart]      = useState([])
   const [activeRides,setActiveRides]= useState([])
+=======
+  const [stats,     setStats]     = useState({})
+  const [docs,      setDocs]      = useState([])
+  const [rides,     setRides]     = useState([])
+  const [drivers,   setDrivers]   = useState([])
+  const [passengers,setPassengers]= useState([])
+  const [revenue,   setRevenue]   = useState({})
+  const [chart,     setChart]     = useState([])
+  const [activeRides,setActiveRides]=useState([])
+>>>>>>> 69edae08ee50f45c471de3ca2de2b8cc4b30e522
 
   const load = useCallback(async () => {
     try {
@@ -213,16 +240,25 @@ export default function Dashboard() {
 
   useRealtimeSync(load, { interval: 20000, topics: ['dashboard','ride','document','panic'] })
 
+<<<<<<< HEAD
   const pendingDocs    = docs.filter(d=>d.status==='PENDING')
   const activeDrivers  = drivers.filter(d=>d.accountStatus==='ACTIVE').length
   const inactiveDrivers= drivers.length - activeDrivers
   const totalPassengers= passengers.length
   const activePassengers= passengers.filter(p=>p.accountStatus==='ACTIVE').length
+=======
+  const pendingDocs   = docs.filter(d=>d.status==='PENDING')
+  const activeDrivers = drivers.filter(d=>d.accountStatus==='ACTIVE').length
+  const inactiveDrivers = drivers.length - activeDrivers
+  const totalPassengers = passengers.length
+  const activePassengers = passengers.filter(p=>p.accountStatus==='ACTIVE').length
+>>>>>>> 69edae08ee50f45c471de3ca2de2b8cc4b30e522
 
   const dailyRevenue = revenue.paymentAmount != null ? (revenue.paymentAmount/30).toFixed(0) : stats.revenue ? (stats.revenue/30).toFixed(0) : '—'
   const totalRevenue = revenue.paymentAmount != null ? revenue.paymentAmount.toLocaleString('fr-FR',{minimumFractionDigits:0}) : '—'
 
   const driverDonut = [
+<<<<<<< HEAD
     {name:'Actifs',     value: activeDrivers||1},
     {name:'Inactifs',   value: inactiveDrivers||0},
     {name:'En attente', value: (stats.pendingDrivers||0)},
@@ -240,6 +276,13 @@ export default function Dashboard() {
       return [ride.passenger.firstName, ride.passenger.lastName].filter(Boolean).join(' ')
     return ride.passenger?.name || ride.passengerName || '—'
   }
+=======
+    {name:'Actifs',    value: activeDrivers||1},
+    {name:'Inactifs',  value: inactiveDrivers||0},
+    {name:'En attente',value: (stats.pendingDrivers||0)},
+  ]
+  const driverColors = ['#10B981','#B0C4E8','#F59E0B']
+>>>>>>> 69edae08ee50f45c471de3ca2de2b8cc4b30e522
 
   return (
     <div className="fade-in">
@@ -295,6 +338,7 @@ export default function Dashboard() {
                 <div style={{textAlign:'center',color:'var(--text4)',fontSize:13}}>Données insuffisantes</div>
               </div>
             )}
+<<<<<<< HEAD
           </div>
 
           {/* Drivers donut */}
@@ -317,10 +361,48 @@ export default function Dashboard() {
                     <span style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>{value}</span>
                   </div>
                 ))}
+=======
+            {chart.length === 0 && (
+              <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:4,marginTop:12}}>
+                {Array.from({length:7}).map((_,i)=>(
+                  <div key={i} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
+                    <div className="skeleton" style={{width:'100%',height:Math.random()*60+20,borderRadius:6}}/>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Drivers donut */}
+          <div className="card fade-up" style={{padding:'22px',animationDelay:'260ms'}}>
+            <div style={{fontWeight:700,fontSize:15,marginBottom:4}}>Répartition Chauffeurs</div>
+            <div style={{fontSize:12,color:'var(--text3)',marginBottom:16}}>{drivers.length||stats.totalDrivers||0} inscrits</div>
+            <div style={{display:'flex',alignItems:'center',gap:16}}>
+              <DonutChart data={driverDonut} colors={driverColors}/>
+              <div style={{flex:1}}>
+                {[
+                  {label:'Actifs',     value:activeDrivers,           color:'#10B981'},
+                  {label:'Inactifs',   value:inactiveDrivers,         color:'#B0C4E8'},
+                  {label:'En attente', value:stats.pendingDrivers||0,  color:'#F59E0B'},
+                ].map(({label,value,color})=>(
+                  <div key={label} style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+                    <div style={{display:'flex',alignItems:'center',gap:7}}>
+                      <div style={{width:8,height:8,borderRadius:2,background:color,flexShrink:0}}/>
+                      <span style={{fontSize:12,color:'var(--text2)'}}>{label}</span>
+                    </div>
+                    <span style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>{value}</span>
+                  </div>
+                ))}
+>>>>>>> 69edae08ee50f45c471de3ca2de2b8cc4b30e522
                 <div style={{marginTop:12,padding:'8px 10px',background:'var(--blue-ll)',borderRadius:8,border:'1px solid var(--border)'}}>
                   <div style={{fontSize:11,color:'var(--text3)'}}>Taux d'activation</div>
                   <div style={{fontSize:16,fontWeight:800,color:'var(--blue)'}}>
                     {drivers.length ? Math.round((activeDrivers/drivers.length)*100) : 0}%
+<<<<<<< HEAD
+                  </div>
+                </div>
+              </div>
+=======
                   </div>
                 </div>
               </div>
@@ -328,6 +410,77 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Row 3: Courses actives + Documents */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:24}}>
+
+          {/* Courses en cours */}
+          <div className="card fade-up" style={{padding:22,animationDelay:'300ms'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+              <div>
+                <div style={{fontWeight:700,fontSize:15}}>Courses en direct</div>
+                <div style={{fontSize:12,color:'var(--text3)',marginTop:2}}>{activeRides.length} course{activeRides.length!==1?'s':''} active{activeRides.length!==1?'s':''}</div>
+              </div>
+              {activeRides.length > 0 && <span className="badge badge-pulse">LIVE</span>}
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:8}}>
+              {activeRides.slice(0,4).map(ride=>(
+                <div key={ride.id} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 12px',background:'var(--surface2)',borderRadius:10,border:'1px solid var(--border)'}}>
+                  <div style={{width:36,height:36,borderRadius:10,background:'var(--blue-l)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                    <svg width="16" height="16" fill="none" stroke="#2B5FF5" strokeWidth="2" viewBox="0 0 24 24"><path d="M8 7h12m0 0l-4-4m4 4l-4 4m0 5H4m0 0l4 4m-4-4l4-4"/></svg>
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:12,fontWeight:600}}>{ride.driver?.name||'Chauffeur'} → {ride.passenger?.name||'Passager'}</div>
+                    <div style={{fontSize:11,color:'var(--text3)'}}>{ride.vehicleType} • {ride.originAddress?.split(',')[0]||'—'}</div>
+                  </div>
+                  <div style={{textAlign:'right',flexShrink:0}}>
+                    <StatusBadge status={ride.status}/>
+                    <div style={{fontSize:11,fontWeight:700,color:'var(--blue)',marginTop:3}}>€{(ride.price||0).toFixed(2)}</div>
+                  </div>
+                </div>
+              ))}
+              {activeRides.length === 0 && (
+                <div style={{textAlign:'center',color:'var(--text4)',padding:'24px 0',fontSize:13}}>
+                  Aucune course en cours actuellement
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Documents en attente */}
+          <div className="card fade-up" style={{padding:22,animationDelay:'360ms'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+              <div>
+                <div style={{fontWeight:700,fontSize:15}}>Documents en attente</div>
+                <div style={{fontSize:12,color:'var(--text3)',marginTop:2}}>{pendingDocs.length} à examiner</div>
+              </div>
+              {pendingDocs.length > 0 && (
+                <span className="badge badge-orange">{pendingDocs.length} en attente</span>
+              )}
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:8}}>
+              {pendingDocs.slice(0,4).map(doc=>(
+                <div key={doc.id} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 12px',background:'var(--surface2)',borderRadius:10,border:'1px solid var(--border)'}}>
+                  <div style={{width:36,height:36,borderRadius:10,background:'rgba(245,158,11,0.10)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                    <svg width="16" height="16" fill="none" stroke="#F59E0B" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:12,fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{doc.type?.replace(/_/g,' ')||'Document'}</div>
+                    <div style={{fontSize:11,color:'var(--text3)'}}>{doc.driverName||doc.uploaderName||'—'}</div>
+                  </div>
+                  <StatusBadge status={doc.status}/>
+                </div>
+              ))}
+              {pendingDocs.length === 0 && (
+                <div style={{textAlign:'center',color:'var(--text4)',padding:'24px 0',fontSize:13}}>
+                  Aucun document en attente
+                </div>
+              )}
+>>>>>>> 69edae08ee50f45c471de3ca2de2b8cc4b30e522
+            </div>
+          </div>
+        </div>
+
+<<<<<<< HEAD
         {/* Row 3: Courses actives + Documents */}
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:24}}>
 
@@ -414,6 +567,10 @@ export default function Dashboard() {
 
         {/* Row 5: Recent rides table */}
         <div className="card fade-up" style={{animationDelay:'460ms'}}>
+=======
+        {/* Row 4: Recent rides table */}
+        <div className="card fade-up" style={{animationDelay:'400ms'}}>
+>>>>>>> 69edae08ee50f45c471de3ca2de2b8cc4b30e522
           <div style={{padding:'18px 22px',display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1.5px solid var(--border)'}}>
             <div>
               <div style={{fontWeight:700,fontSize:15}}>Courses récentes</div>
@@ -435,6 +592,7 @@ export default function Dashboard() {
               <tr><th>ID</th><th>Date</th><th>Chauffeur</th><th>Passager</th><th>Type</th><th>Statut</th><th>Montant</th></tr>
             </thead>
             <tbody>
+<<<<<<< HEAD
               {rides.slice(0,10).map(r => (
                 <tr key={r.id}>
                   <td style={{color:'var(--blue)',fontWeight:700,fontSize:12,fontFamily:'monospace'}}>#{r.id?.slice(-6)?.toUpperCase()}</td>
@@ -450,6 +608,19 @@ export default function Dashboard() {
                     </div>
                   </td>
                   <td style={{fontSize:13}}>{passengerName(r)}</td>
+=======
+              {rides.slice(0,8).map(r => (
+                <tr key={r.id}>
+                  <td style={{color:'var(--blue)',fontWeight:700,fontSize:12,fontFamily:'monospace'}}>#{r.id?.slice(-6)?.toUpperCase()}</td>
+                  <td style={{color:'var(--text2)',fontSize:12}}>{r.requestedAt ? new Date(r.requestedAt).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : r.date||'—'}</td>
+                  <td>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <Avatar name={r.driver?.name||r.driverName||'?'} size={28}/>
+                      <span style={{fontSize:13,fontWeight:500}}>{r.driver?.name||r.driverName||<span style={{color:'var(--text4)',fontStyle:'italic'}}>Recherche...</span>}</span>
+                    </div>
+                  </td>
+                  <td style={{fontSize:13}}>{r.passenger?.name||r.passengerName||'—'}</td>
+>>>>>>> 69edae08ee50f45c471de3ca2de2b8cc4b30e522
                   <td><span style={{fontSize:11,fontWeight:600,color:'var(--text2)',background:'var(--surface2)',padding:'2px 8px',borderRadius:20,border:'1px solid var(--border)'}}>{r.vehicleType||'MOTO'}</span></td>
                   <td><StatusBadge status={r.status}/></td>
                   <td style={{fontWeight:700,color:r.price>0?'var(--text)':'var(--text4)'}}>{r.price>0?`€${r.price.toFixed(2)}`:'—'}</td>
