@@ -106,6 +106,7 @@ export const financeService = {
 export const panicsService = {
   getAll:    () => api.get('/admin/panics').catch(() => []),
   getActive: () => api.get('/admin/panics/active').catch(() => []),
+  resolve:   (id) => api.patch(`/admin/panics/${id}/resolve`).catch(() => null),
 }
 
 // Estimation prix (si tu l'utilises)
