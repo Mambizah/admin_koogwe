@@ -4,31 +4,57 @@ export const API_BASE = import.meta.env.VITE_API_URL || ''
 
 const api = axios.create({
   baseURL: API_BASE,
-  timeout: 15000
+  timeout: 15000,
+  headers: {
+    'Content-Type': 'application/json',
+  }
 })
 
-api.interceptors.request.use(cfg => {
-  const token = localStorage.getItem('koogwe_admin_token')
-  if (token) cfg.headers.Authorization = `Bearer ${token}`
-  return cfg
-})
+// Interceptor pour ajouter le token automatiquement
+api.interceptors.request.use(
+  (cfg) => {
+    const token = localStorage.getItem('koogwe_admin_token')
+    if (token) {
+      cfg.headers.Authorization = `Bearer ${token}`
+      // Pour debug (tu peux le supprimer plus tard)
+      // console.log('🔑 Token envoyé avec la requête')
+    }
+    return cfg
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
 
+// Interceptor pour gérer les erreurs (surtout 401)
 api.interceptors.response.use(
-  res => res.data,
-  err => {
-    if (err.response?.status === 401 || err.response?.status === 403) {
-      if (!window.location.pathname.includes('login') && window.location.pathname !== '/') {
+  (res) => res.data,                    // Retourne directement les données
+  (err) => {
+    const status = err.response?.status
+
+    if (status === 401 || status === 403) {
+      console.warn('🚫 Accès non autorisé (401/403)')
+
+      // Si on n'est pas déjà sur la page login, on redirige
+      if (!window.location.pathname.includes('login') && 
+          window.location.pathname !== '/' && 
+          window.location.pathname !== '/login') {
+        
         localStorage.removeItem('koogwe_admin_token')
-        window.location.href = '/'
+        window.location.href = '/login'   // ← Changé en /login pour plus de précision
       }
     }
+
     return Promise.reject(err)
   }
 )
 
+// ==================== SERVICES ====================
+
 // Auth
 export const authService = {
-  adminLogin: (email, password) => api.post('/auth/admin-login', { email, password }),
+  adminLogin: (email, password) => 
+    api.post('/auth/admin-login', { email, password }),
 }
 
 // Dashboard
@@ -80,34 +106,21 @@ export const financeService = {
 export const panicsService = {
   getAll:    () => api.get('/admin/panics').catch(() => []),
   getActive: () => api.get('/admin/panics/active').catch(() => []),
-  resolve:   (id) => api.patch(`/admin/panics/${id}/resolve`).catch(() => null),
 }
 
-// Wallets
-export const walletService = {
-  getBalance:      (userId) => api.get(`/wallet/balance/${userId}`).catch(() => ({ balance: 0 })),
-  getTransactions: (userId) => api.get(`/wallet/transactions/${userId}`).catch(() => []),
-}
-
-// Estimation prix
+// Estimation prix (si tu l'utilises)
 export const pricingService = {
   estimate:     (params) => api.post('/admin/estimate-price', params),
   getConfig:    ()       => api.get('/admin/config/pricing').catch(() => null),
-  updateConfig: (p)      => api.patch('/admin/config/pricing', p),
 }
 
 // Config
 export const adminConfigService = {
   get:              () => api.get('/admin/config').catch(() => null),
-  update:           (p) => api.patch('/admin/config', p),
   getPricing:       () => api.get('/admin/config/pricing').catch(() => null),
   getFinancials:    () => api.get('/admin/config/financials').catch(() => null),
   getSecurity:      () => api.get('/admin/config/security').catch(() => null),
   getPayments:      () => api.get('/admin/config/payments').catch(() => null),
-  updatePricing:    (p) => api.patch('/admin/config/pricing', p),
-  updateFinancials: (p) => api.patch('/admin/config/financials', p),
-  updateSecurity:   (p) => api.patch('/admin/config/security', p),
-  updatePayments:   (p) => api.patch('/admin/config/payments', p),
 }
 
 export default api
