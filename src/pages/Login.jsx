@@ -4,39 +4,6 @@ import { authService } from '../services/api'
 import logoPng from '../assets/logo.png'
 
 export default function Login({ onLogin }) {
-<<<<<<< HEAD
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-
-  const handleSubmit = async (event) => {
-    event.preventDefault()
-    setError(null)
-    setLoading(true)
-    try {
-      const data = await authService.adminLogin(email, password)
-      if (!data) throw new Error('Aucune réponse du serveur')
-      if (data.token) {
-        localStorage.setItem('koogwe_admin_token', data.token)
-      }
-      const user = data.user || { name: data.name || 'Administrateur', email }
-      localStorage.setItem('koogwe_admin_user', JSON.stringify(user))
-      onLogin(user)
-    } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Échec de la connexion')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:24,background:'linear-gradient(180deg,#F7F9FF 0%,#EFF4FF 100%)'}}>
-      <div style={{width:'100%',maxWidth:420,background:'#fff',borderRadius:24,boxShadow:'0 28px 80px rgba(43,95,245,0.14)',padding:'32px 28px'}}>
-        <div style={{marginBottom:28}}>
-          <h1 style={{fontSize:28,fontWeight:800,color:'#0D1B4B',marginBottom:8}}>Connexion Admin</h1>
-          <p style={{fontSize:14,color:'#7A9CC9'}}>Accédez au tableau de bord des chauffeurs, passagers, documents et courses.</p>
-=======
   const [email,    setEmail]    = useState(localStorage.getItem('koogwe_admin_email') || '')
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(false)
@@ -167,29 +134,7 @@ export default function Login({ onLogin }) {
             <svg width="14" height="14" fill="none" stroke="#2B5FF5" strokeWidth="2" viewBox="0 0 24 24" style={{flexShrink:0,marginTop:1}}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             <span style={{fontSize:12,color:'#3D5A99',lineHeight:1.6}}>Accès restreint aux comptes administrateurs. Toute tentative non autorisée est enregistrée.</span>
           </div>
->>>>>>> 69edae08ee50f45c471de3ca2de2b8cc4b30e522
         </div>
-        <form onSubmit={handleSubmit} style={{display:'grid',gap:18}}>
-          <label className="label">Email</label>
-          <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@koogwe.com" required />
-
-<<<<<<< HEAD
-          <label className="label">Mot de passe</label>
-          <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
-
-          {error && <div style={{padding:'12px 14px',background:'rgba(248,113,113,0.12)',border:'1px solid rgba(239,68,68,0.18)',borderRadius:12,color:'#B91C1C'}}>{error}</div>}
-
-          <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
-            {loading ? 'Connexion ...' : 'Se connecter'}
-          </button>
-        </form>
-=======
-        <div style={{display:'flex',justifyContent:'center',gap:24,marginTop:22}}>
-          {['Support','Confidentialité','Conditions'].map(l => (
-            <button key={l} style={{fontSize:11,color:'#7A9CC9',background:'none',border:'none',cursor:'pointer',fontWeight:500}}>{l}</button>
-          ))}
-        </div>
->>>>>>> 69edae08ee50f45c471de3ca2de2b8cc4b30e522
       </div>
       <style>{`@keyframes floatUp{0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}`}</style>
     </div>

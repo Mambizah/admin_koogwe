@@ -1,44 +1,10 @@
-<<<<<<< HEAD
-import { useState, useEffect } from 'react'
-=======
 // Pages : Passengers, Rides, Revenue, Panics
 import { useState, useEffect, useCallback } from 'react'
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
-import { SearchBar, FilterTabs, StatusBadge, Avatar, Loading, EmptyState, StatCard, InfoRow } from '../components/UI'
->>>>>>> 69edae08ee50f45c471de3ca2de2b8cc4b30e522
+import { SearchBar, FilterTabs, StatusBadge, Avatar, Loading, EmptyState, StatCard, InfoRow, TopBar } from '../components/UI'
 import { passengersService, ridesService, financeService, panicsService } from '../services/api'
-import { TopBar, StatusBadge, Avatar, EmptyState, SearchBar } from '../components/UI'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
-<<<<<<< HEAD
-export function Passengers() {
-  const [passengers, setPassengers] = useState([])
-  const [filter, setFilter] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-
-  const loadPassengers = async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const response = await passengersService.getAll()
-      const list = Array.isArray(response) ? response : response?.items || []
-      setPassengers(list)
-    } catch (err) {
-      setError('Impossible de charger les passagers.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => { loadPassengers() }, [])
-  useRealtimeSync(loadPassengers, { interval: 20000, topics: ['passenger','passengers'], enabled: true })
-
-  const visiblePassengers = passengers.filter(passenger => {
-    const text = `${passenger.firstName||passenger.name||''} ${passenger.lastName||''} ${passenger.email||''} ${passenger.phone||''}`.toLowerCase()
-    return text.includes(filter.toLowerCase())
-=======
 const TT = { background:'var(--surface)', border:'1.5px solid var(--border2)', borderRadius:10, boxShadow:'0 8px 24px rgba(43,95,245,0.12)', fontSize:12, fontFamily:'Plus Jakarta Sans,sans-serif', color:'var(--text)' }
 
 // ── PASSAGERS ─────────────────────────────────────────────────────────────────
@@ -214,7 +180,6 @@ export function Rides() {
       r.passenger?.name?.toLowerCase().includes(search.toLowerCase()) ||
       r.id?.toLowerCase().includes(search.toLowerCase())
     return matchFilter && matchSearch
->>>>>>> 69edae08ee50f45c471de3ca2de2b8cc4b30e522
   })
 
   const stats = {
@@ -225,15 +190,6 @@ export function Rides() {
   }
 
   return (
-<<<<<<< HEAD
-    <div className="fade-in" style={{padding:'24px 28px'}}>
-      <TopBar title="Passagers" onSearch={setFilter} />
-      <div className="card" style={{padding:22,marginTop:16}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:18}}>
-          <div>
-            <div style={{fontSize:15,fontWeight:700,color:'var(--text)'}}>Liste des passagers inscrits</div>
-            <div style={{fontSize:12,color:'var(--text3)',marginTop:4}}>{passengers.length} passager{passengers.length>1?'s':''} trouvés</div>
-=======
     <div style={{ display:'flex', flexDirection:'column', height:'100vh' }}>
       <div style={{ padding:'22px 28px 20px', borderBottom:'1.5px solid var(--border)' }}>
         <h1 style={{ fontFamily:'Sora,sans-serif', fontSize:22, fontWeight:800, color:'var(--text)', marginBottom:4 }}>Gestion des Courses</h1>
@@ -414,49 +370,8 @@ export function Revenue() {
                 color: period===v ? '#fff' : 'var(--text2)',
               }}>{l}</button>
             ))}
->>>>>>> 69edae08ee50f45c471de3ca2de2b8cc4b30e522
           </div>
-          <SearchBar value={filter} onChange={setFilter} placeholder="Rechercher un passager..." />
         </div>
-<<<<<<< HEAD
-
-        {error && <div style={{padding:'12px 14px',background:'rgba(248,113,113,0.12)',border:'1px solid rgba(239,68,68,0.18)',borderRadius:12,color:'#B91C1C',marginBottom:16}}>{error}</div>}
-
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Nom</th>
-                <th>Email / Téléphone</th>
-                <th>Statut</th>
-                <th>Inscription</th>
-                <th>Courses</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visiblePassengers.map(passenger => (
-                <tr key={passenger.id || passenger._id || passenger.email}>
-                  <td style={{display:'flex',alignItems:'center',gap:10}}>
-                    <Avatar name={passenger.firstName || passenger.name || 'Pa'} size={36} />
-                    <div>
-                      <div style={{fontSize:13,fontWeight:700}}>{[passenger.firstName, passenger.lastName].filter(Boolean).join(' ') || passenger.name || '—'}</div>
-                      <div style={{fontSize:12,color:'var(--text3)'}}>{passenger.company || 'Particulier'}</div>
-                    </div>
-                  </td>
-                  <td style={{fontSize:12,color:'var(--text2)'}}>
-                    {passenger.email || '—'}<br />{passenger.phone || '—'}
-                  </td>
-                  <td><StatusBadge status={passenger.accountStatus || passenger.status || 'ACTIVE'} /></td>
-                  <td style={{fontSize:12,color:'var(--text3)'}}>{passenger.createdAt ? new Date(passenger.createdAt).toLocaleDateString('fr-FR') : '—'}</td>
-                  <td style={{fontSize:12,color:'var(--text2)'}}>{passenger.rideCount || 0} courses</td>
-                </tr>
-              ))}
-              {visiblePassengers.length === 0 && (
-                <tr><td colSpan={5}><EmptyState message={loading ? 'Chargement des passagers...' : 'Aucun passager trouvé.'} /></td></tr>
-              )}
-            </tbody>
-          </table>
-=======
         {chart.length > 0 ? (
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={chart} margin={{ top:4, right:4, left:-20, bottom:0 }}>
@@ -489,7 +404,6 @@ export function Revenue() {
             <span style={{ padding:'5px 12px', fontSize:12, color:'var(--text3)' }}>Page {page}</span>
             <button className="btn btn-primary btn-sm" onClick={() => setPage(p => p+1)}>Suiv. →</button>
           </div>
->>>>>>> 69edae08ee50f45c471de3ca2de2b8cc4b30e522
         </div>
         {loading ? <Loading/> : (
           <table>
@@ -525,222 +439,6 @@ export function Revenue() {
           </table>
         )}
         {!loading && txs.length === 0 && <EmptyState message="Aucune transaction trouvée"/>}
-      </div>
-    </div>
-  )
-}
-
-<<<<<<< HEAD
-export function Rides() {
-  const [rides, setRides] = useState([])
-  const [filter, setFilter] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-
-  const loadRides = async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const response = await ridesService.getAll()
-      const list = Array.isArray(response) ? response : response?.items || []
-      setRides(list)
-    } catch (err) {
-      setError('Impossible de charger les courses.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => { loadRides() }, [])
-  useRealtimeSync(loadRides, { interval: 15000, topics: ['ride','rides'], enabled: true })
-
-  const visibleRides = rides.filter(ride => {
-    const driverName = ride.driver?.firstName || ride.driver?.lastName ? [ride.driver.firstName, ride.driver.lastName].filter(Boolean).join(' ') : ride.driverName || ''
-    const passengerName = ride.passenger?.firstName || ride.passenger?.lastName ? [ride.passenger.firstName, ride.passenger.lastName].filter(Boolean).join(' ') : ride.passengerName || ''
-    const text = `${ride.id} ${driverName} ${passengerName} ${ride.status} ${ride.vehicleType}`.toLowerCase()
-    return text.includes(filter.toLowerCase())
-  })
-
-  const driverName = (ride) => {
-    if (ride.driver?.firstName || ride.driver?.lastName)
-      return [ride.driver.firstName, ride.driver.lastName].filter(Boolean).join(' ')
-    return ride.driver?.name || ride.driverName || null
-  }
-  const passengerName = (ride) => {
-    if (ride.passenger?.firstName || ride.passenger?.lastName)
-      return [ride.passenger.firstName, ride.passenger.lastName].filter(Boolean).join(' ')
-    return ride.passenger?.name || ride.passengerName || '—'
-  }
-
-  return (
-    <div className="fade-in" style={{padding:'24px 28px'}}>
-      <TopBar title="Courses" onSearch={setFilter} />
-      <div className="card" style={{padding:22,marginTop:16}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:18}}>
-          <div>
-            <div style={{fontSize:15,fontWeight:700,color:'var(--text)'}}>Historique des courses</div>
-            <div style={{fontSize:12,color:'var(--text3)',marginTop:4}}>{rides.length} course{rides.length>1?'s':''} trouvée{rides.length>1?'s':''}</div>
-          </div>
-          <SearchBar value={filter} onChange={setFilter} placeholder="Rechercher une course..." />
-        </div>
-
-        {error && <div style={{padding:'12px 14px',background:'rgba(248,113,113,0.12)',border:'1px solid rgba(239,68,68,0.18)',borderRadius:12,color:'#B91C1C',marginBottom:16}}>{error}</div>}
-
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Date</th>
-                <th>Chauffeur</th>
-                <th>Passager</th>
-                <th>Type</th>
-                <th>Statut</th>
-                <th>Montant</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visibleRides.map(ride => (
-                <tr key={ride.id}>
-                  <td style={{color:'var(--blue)',fontWeight:700,fontSize:12,fontFamily:'monospace'}}>#{ride.id?.slice(-6)?.toUpperCase()}</td>
-                  <td style={{color:'var(--text2)',fontSize:12}}>
-                    {ride.requestedAt ? new Date(ride.requestedAt).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : ride.date||'—'}
-                  </td>
-                  <td>
-                    <div style={{display:'flex',alignItems:'center',gap:8}}>
-                      <Avatar name={driverName(ride)||'?'} size={28}/>
-                      <span style={{fontSize:13,fontWeight:500}}>
-                        {driverName(ride) || <span style={{color:'var(--text4)',fontStyle:'italic'}}>Recherche...</span>}
-                      </span>
-                    </div>
-                  </td>
-                  <td style={{fontSize:13}}>{passengerName(ride)}</td>
-                  <td><span style={{fontSize:11,fontWeight:600,color:'var(--text2)',background:'var(--surface2)',padding:'2px 8px',borderRadius:20,border:'1px solid var(--border)'}}>{ride.vehicleType||'MOTO'}</span></td>
-                  <td><StatusBadge status={ride.status}/></td>
-                  <td style={{fontWeight:700,color:ride.price>0?'var(--text)':'var(--text4)'}}>{ride.price>0?`€${ride.price.toFixed(2)}`:'—'}</td>
-                </tr>
-              ))}
-              {visibleRides.length === 0 && (
-                <tr><td colSpan={7}><EmptyState message={loading ? 'Chargement des courses...' : 'Aucune course trouvée.'} /></td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  )
-}export function Revenue() {
-  const [stats, setStats] = useState({})
-  const [chart, setChart] = useState([])
-  const [transactions, setTransactions] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-
-  const loadData = async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const [s, c, t] = await Promise.all([
-        financeService.getStats(),
-        financeService.getChart("monthly"),
-        financeService.getTransactions(),
-      ])
-      setStats(s || {})
-      if (c?.points) {
-        const pts = c.points.slice(-12)
-        const grouped = {}
-        pts.forEach(p => {
-          const d = new Date(p.at).toLocaleDateString("fr-FR",{month:"short",year:"2-digit"})
-          if (!grouped[d]) grouped[d] = {date:d, revenue:0, rides:0}
-          if (p.type==="PAYMENT") grouped[d].revenue += Math.abs(p.amount||0)
-          grouped[d].rides++
-        })
-        setChart(Object.values(grouped).slice(-6))
-      }
-      setTransactions(Array.isArray(t) ? t : t?.items || [])
-    } catch (err) {
-      setError("Impossible de charger les données financières.")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => { loadData() }, [])
-
-  return (
-    <div className="fade-in" style={{padding:"24px 28px"}}>
-      <TopBar title="Revenus" />
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginTop:16}}>
-        <div className="card" style={{padding:22}}>
-          <div style={{fontWeight:700,fontSize:15,marginBottom:16}}>Statistiques financières</div>
-          {error && <div style={{padding:"12px 14px",background:"rgba(248,113,113,0.12)",border:"1px solid rgba(239,68,68,0.18)",borderRadius:12,color:"#B91C1C",marginBottom:16}}>{error}</div>}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-            <div style={{padding:"16px",background:"var(--surface2)",borderRadius:10,border:"1px solid var(--border)"}}>
-              <div style={{fontSize:12,color:"var(--text3)",marginBottom:4}}>Revenus totaux</div>
-              <div style={{fontSize:20,fontWeight:800,color:"var(--blue)"}}>€{(stats.paymentAmount||0).toLocaleString("fr-FR")}</div>
-            </div>
-            <div style={{padding:"16px",background:"var(--surface2)",borderRadius:10,border:"1px solid var(--border)"}}>
-              <div style={{fontSize:12,color:"var(--text3)",marginBottom:4}}>Courses payées</div>
-              <div style={{fontSize:20,fontWeight:800,color:"var(--green)"}}>{stats.totalRides||0}</div>
-            </div>
-            <div style={{padding:"16px",background:"var(--surface2)",borderRadius:10,border:"1px solid var(--border)"}}>
-              <div style={{fontSize:12,color:"var(--text3)",marginBottom:4}}>Commission plateforme</div>
-              <div style={{fontSize:20,fontWeight:800,color:"var(--purple)"}}>€{(stats.platformCommission||0).toFixed(2)}</div>
-            </div>
-            <div style={{padding:"16px",background:"var(--surface2)",borderRadius:10,border:"1px solid var(--border)"}}>
-              <div style={{fontSize:12,color:"var(--text3)",marginBottom:4}}>Paiements chauffeurs</div>
-              <div style={{fontSize:20,fontWeight:800,color:"var(--orange)"}}>€{(stats.driverPayments||0).toFixed(2)}</div>
-            </div>
-          </div>
-        </div>
-        <div className="card" style={{padding:22}}>
-          <div style={{fontWeight:700,fontSize:15,marginBottom:16}}>Évolution mensuelle</div>
-          {chart.length > 0 ? (
-            <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={chart} margin={{top:4,right:4,left:-20,bottom:0}}>
-                <defs>
-                  <linearGradient id="gradRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2B5FF5" stopOpacity={0.18}/>
-                    <stop offset="95%" stopColor="#2B5FF5" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="date" tick={{fontSize:10,fill:"#7A9CC9"}} axisLine={false} tickLine={false}/>
-                <YAxis tick={{fontSize:10,fill:"#7A9CC9"}} axisLine={false} tickLine={false}/>
-                <Tooltip contentStyle={{background:"rgba(255,255,255,0.97)",border:"1.5px solid rgba(43,95,245,0.15)",borderRadius:10,boxShadow:"0 8px 24px rgba(43,95,245,0.12)",fontSize:12,fontFamily:"Plus Jakarta Sans,sans-serif",color:"#0D1B4B"}}
-                  formatter={(v)=>[`€${v.toFixed(2)}`, "Revenus"]}/>
-                <Area type="monotone" dataKey="revenue" stroke="#2B5FF5" strokeWidth={2.5} fill="url(#gradRev)" dot={false}/>
-              </AreaChart>
-            </ResponsiveContainer>
-          ) : (
-            <div style={{height:200,display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <div style={{textAlign:"center",color:"var(--text4)",fontSize:13}}>Données insuffisantes</div>
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="card" style={{padding:22,marginTop:16}}>
-        <div style={{fontWeight:700,fontSize:15,marginBottom:16}}>Transactions récentes</div>
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr><th>ID</th><th>Date</th><th>Type</th><th>Montant</th><th>Statut</th></tr>
-            </thead>
-            <tbody>
-              {transactions.slice(0,10).map(t => (
-                <tr key={t.id}>
-                  <td style={{color:"var(--blue)",fontWeight:700,fontSize:12,fontFamily:"monospace"}}>#{t.id?.slice(-6)?.toUpperCase()}</td>
-                  <td style={{color:"var(--text2)",fontSize:12}}>{t.createdAt ? new Date(t.createdAt).toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : "—"}</td>
-                  <td style={{fontSize:12,color:"var(--text2)"}}>{t.type?.replace(/_/g," ")||"—"}</td>
-                  <td style={{fontWeight:700,color:t.amount>0?"var(--green)":"var(--text)"}}>{t.amount>0?`+€${t.amount.toFixed(2)}`:`€${t.amount.toFixed(2)}`}</td>
-                  <td><StatusBadge status={t.status}/></td>
-                </tr>
-              ))}
-              {transactions.length === 0 && (
-                <tr><td colSpan={5}><EmptyState message={loading ? "Chargement..." : "Aucune transaction trouvée."} /></td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
       </div>
     </div>
   )
@@ -826,130 +524,3 @@ export function Panics() {
     </div>
   )
 }
-=======
-// ── ALERTES PANIQUE ───────────────────────────────────────────────────────────
-export function Panics() {
-  const [panics,   setPanics]   = useState([])
-  const [selected, setSelected] = useState(null)
-  const [loading,  setLoading]  = useState(true)
-  const [saving,   setSaving]   = useState(false)
-
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      const d = await panicsService.getAll()
-      const list = Array.isArray(d) ? d : (d?.items ?? [])
-      setPanics(list)
-    } catch {}
-    setLoading(false)
-  }, [])
-
-  useRealtimeSync(load, { interval: 10000, topics: ['panic','sos','alert','emergency'] })
-
-  const resolve = async (id) => {
-    setSaving(true)
-    try {
-      await panicsService.resolve(id)
-      setPanics(prev => prev.map(p => p.id === id ? { ...p, resolved: true, status: 'RESOLVED' } : p))
-      if (selected?.id === id) setSelected(prev => ({ ...prev, resolved: true, status: 'RESOLVED' }))
-    } catch(e) { alert('Erreur: ' + (e?.response?.data?.message || e.message)) }
-    setSaving(false)
-  }
-
-  const activeCount = panics.filter(p => !p.resolved && p.status !== 'RESOLVED').length
-
-  return (
-    <div style={{ display:'flex', flexDirection:'column', height:'100vh' }}>
-      <div style={{ padding:'22px 28px 20px', borderBottom:'1.5px solid var(--border)' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-          <h1 style={{ fontFamily:'Sora,sans-serif', fontSize:22, fontWeight:800, color:'var(--text)' }}>Alertes Panique</h1>
-          {activeCount > 0 && (
-            <span className="badge badge-pulse">{activeCount} ACTIVES</span>
-          )}
-        </div>
-        <p style={{ fontSize:13, color:'var(--text2)', marginTop:4 }}>Interventions d'urgence en temps réel.</p>
-      </div>
-
-      {loading ? <Loading/> : panics.length === 0 ? (
-        <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <div style={{ textAlign:'center' }}>
-            <div style={{ width:64, height:64, borderRadius:20, background:'var(--green-l)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
-              <svg width="28" height="28" fill="none" stroke="var(--green)" strokeWidth="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <div style={{ fontWeight:700, fontSize:16, color:'var(--text)', marginBottom:6 }}>Aucune alerte active</div>
-            <div style={{ fontSize:13, color:'var(--text3)' }}>Tout est calme sur la plateforme</div>
-          </div>
-        </div>
-      ) : (
-        <div style={{ flex:1, overflow:'hidden', padding:'20px 28px', display:'flex', gap:16 }}>
-          <div style={{ flex:1, overflow:'auto', display:'flex', flexDirection:'column', gap:10 }}>
-            {panics.map(p => (
-              <div key={p.id} onClick={() => setSelected(p)}
-                className="card"
-                style={{ padding:'16px', cursor:'pointer', borderLeft:`4px solid ${p.resolved || p.status === 'RESOLVED' ? 'var(--green)' : 'var(--red)'}`, transition:'all 0.2s', background:selected?.id===p.id?'var(--blue-ll)':'var(--surface)' }}>
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                    <div style={{ width:40, height:40, borderRadius:12, background: p.resolved ? 'var(--green-l)' : 'var(--red-l)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                      <span style={{ fontSize:20 }}>{p.resolved ? '✅' : '🆘'}</span>
-                    </div>
-                    <div>
-                      <div style={{ fontWeight:700, fontSize:14, color:'var(--text)' }}>
-                        {p.passenger?.name || p.driver?.name || 'Utilisateur inconnu'}
-                      </div>
-                      <div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>
-                        {p.rideId ? `Course #${p.rideId.slice(-6).toUpperCase()}` : 'Hors course'} •{' '}
-                        {p.createdAt ? new Date(p.createdAt).toLocaleString('fr-FR', { hour:'2-digit', minute:'2-digit' }) : '—'}
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-                    <StatusBadge status={p.resolved || p.status === 'RESOLVED' ? 'COMPLETED' : 'REQUESTED'}/>
-                    {!p.resolved && p.status !== 'RESOLVED' && (
-                      <button className="btn btn-danger btn-sm" onClick={e => { e.stopPropagation(); resolve(p.id) }} disabled={saving}>
-                        Résoudre
-                      </button>
-                    )}
-                  </div>
-                </div>
-                {p.lat && p.lng && (
-                  <div style={{ marginTop:10, padding:'8px 10px', background:'var(--surface2)', borderRadius:8, fontSize:12, color:'var(--text3)', display:'flex', alignItems:'center', gap:6 }}>
-                    <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                    GPS: {parseFloat(p.lat).toFixed(4)}, {parseFloat(p.lng).toFixed(4)}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {selected && (
-            <div className="card slide-r" style={{ width:300, flexShrink:0, overflow:'auto' }}>
-              <div style={{ padding:'16px', borderBottom:'1.5px solid var(--border)', display:'flex', alignItems:'center', gap:10 }}>
-                <span style={{ fontSize:28 }}>{selected.resolved ? '✅' : '🆘'}</span>
-                <div>
-                  <div style={{ fontWeight:700 }}>Détail de l'alerte</div>
-                  <div style={{ fontSize:12, color:'var(--text3)' }}>{selected.createdAt ? new Date(selected.createdAt).toLocaleString('fr-FR') : '—'}</div>
-                </div>
-              </div>
-              <div style={{ padding:'16px' }}>
-                <InfoRow label="Utilisateur" value={selected.passenger?.name || selected.driver?.name || '—'}/>
-                <InfoRow label="Email" value={selected.passenger?.email || selected.driver?.email || '—'}/>
-                <InfoRow label="Course" value={selected.rideId ? `#${selected.rideId.slice(-6).toUpperCase()}` : 'Hors course'}/>
-                <InfoRow label="Latitude" value={selected.lat ? parseFloat(selected.lat).toFixed(6) : '—'} mono/>
-                <InfoRow label="Longitude" value={selected.lng ? parseFloat(selected.lng).toFixed(6) : '—'} mono/>
-                <InfoRow label="Statut" value={selected.resolved || selected.status === 'RESOLVED' ? '✅ Résolu' : '🔴 Actif'}/>
-              </div>
-              {!selected.resolved && selected.status !== 'RESOLVED' && (
-                <div style={{ padding:'12px 16px', borderTop:'1.5px solid var(--border)' }}>
-                  <button className="btn btn-danger btn-full" onClick={() => resolve(selected.id)} disabled={saving}>
-                    {saving ? 'En cours...' : '✅ Marquer comme résolu'}
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
->>>>>>> 69edae08ee50f45c471de3ca2de2b8cc4b30e522
