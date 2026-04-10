@@ -113,15 +113,15 @@ function PriceEstimator() {
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
             <span style={{fontSize:13,fontWeight:600,color:'var(--text2)'}}>Prix estimé</span>
             <span style={{fontSize:28,fontWeight:900,color:'var(--blue)',letterSpacing:-1}}>
-              {result.estimate?.toFixed(2)} <span style={{fontSize:14,fontWeight:600,color:'var(--text3)'}}>{result.currency||'XOF'}</span>
+              {result.estimate?.toFixed(2)} <span style={{fontSize:14,fontWeight:600,color:'var(--text3)'}}>€</span>
             </span>
           </div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
             {[
-              ['Base fixe',    `${result.breakdown?.priseEnCharge?.toFixed(2)} ${result.currency||'XOF'}`],
-              ['Distance',     `${result.breakdown?.prixDistance?.toFixed(2)} ${result.currency||'XOF'}`],
-              ['Temps',        `${result.breakdown?.prixTemps?.toFixed(2)} ${result.currency||'XOF'}`],
-              ['Base totale',  `${result.breakdown?.prixBase?.toFixed(2)} ${result.currency||'XOF'}`],
+              ['Base fixe',    `${result.breakdown?.priseEnCharge?.toFixed(2)} €`],
+              ['Distance',     `${result.breakdown?.prixDistance?.toFixed(2)} €`],
+              ['Temps',        `${result.breakdown?.prixTemps?.toFixed(2)} €`],
+              ['Base totale',  `${result.breakdown?.prixBase?.toFixed(2)} €`],
             ].map(([l,v]) => (
               <div key={l} style={{padding:'8px 10px',background:'var(--surface)',borderRadius:8,border:'1px solid var(--border)'}}>
                 <div style={{fontSize:10,color:'var(--text4)',marginBottom:2,fontWeight:600,textTransform:'uppercase',letterSpacing:.5}}>{l}</div>
