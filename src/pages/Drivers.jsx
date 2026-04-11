@@ -16,7 +16,14 @@ export default function Drivers() {
     setLoading(true); setError(null)
     try {
       const d = await driversService.getAll()
-      const list = Array.isArray(d) ? d : (d?.items ?? [])
+      const raw = Array.isArray(d) ? d : (d?.items ?? [])
+      // Aplatir user dans le driver pour simplifier l'accès
+      const list = raw.map(driver => ({
+        ...driver,
+        ...(driver.user || {}),
+        id: driver.userId || driver.id,
+        profileId: driver.id,
+      }))
       setDrivers(list)
     } catch(e) {
       setError(e?.response?.data?.message || 'Erreur de chargement')
@@ -26,17 +33,17 @@ export default function Drivers() {
 
   useRealtimeSync(load, { interval: 25000, topics: ['driver','drivers','account'] })
 
-  const getDriverName = (d) => [d.firstName, d.lastName].filter(Boolean).join(' ') || d.name || '—'
+  const getDriverName = (d) => [d.user?.firstName ?? d.firstName, d.user?.lastName ?? d.lastName].filter(Boolean).join(' ') || d.user?.name || d.name || '—'
 
   const filtered = drivers.filter(d => {
     const name = getDriverName(d)
     const matchSearch = !search || name.toLowerCase().includes(search.toLowerCase()) || d.email?.toLowerCase().includes(search.toLowerCase()) || d.phone?.includes(search)
-    const matchFilter = statusFilter === 'ALL' || d.accountStatus === statusFilter
+    const matchFilter = statusFilter === 'ALL' || d.accountStatus === statusFilter || d.user?.accountStatus === statusFilter
     return matchSearch && matchFilter
   })
 
   const activeCount = drivers.filter(d => d.accountStatus === 'ACTIVE').length
-  const pendingCount = drivers.filter(d => d.accountStatus === 'PENDING' || d.approvalStatus === 'PENDING').length
+  const pendingCount = drivers.filter(d => ['PENDING','ADMIN_REVIEW_PENDING','DOCUMENTS_PENDING'].includes(d.accountStatus) || d.approvalStatus === 'PENDING').length
   const suspendedCount = drivers.filter(d => d.accountStatus === 'SUSPENDED').length
   const newThisMonth = drivers.filter(d => {
     if (!d.createdAt) return false
@@ -187,7 +194,7 @@ export default function Drivers() {
             </div>
 
             <div style={{ padding:'12px 16px', borderTop:'1px solid var(--border)' }}>
-              {selected.accountStatus === 'PENDING' && (
+              {['PENDING','ADMIN_REVIEW_PENDING','DOCUMENTS_PENDING'].includes(selected.accountStatus) && (
                 <div style={{ display:'flex', gap:8, marginBottom:8 }}>
                   <button onClick={() => approveDriver(selected)} className="btn btn-success btn-full" style={{ flex:1 }}>
                     ✓ Approuver
