@@ -53,8 +53,8 @@ export default function Drivers() {
 
   const toggleSuspend = async (d) => {
     try {
-      if (d.accountStatus === 'SUSPENDED') await driversService.activate(d.id)
-      else await driversService.suspend(d.id)
+      if (d.accountStatus === 'SUSPENDED') await driversService.activate(d.profileId || d.id)
+      else await driversService.suspend(d.profileId || d.id)
       setDrivers(prev => prev.map(x => x.id === d.id ? { ...x, accountStatus: d.accountStatus === 'SUSPENDED' ? 'ACTIVE' : 'SUSPENDED' } : x))
       if (selected?.id === d.id) setSelected(prev => ({ ...prev, accountStatus: d.accountStatus === 'SUSPENDED' ? 'ACTIVE' : 'SUSPENDED' }))
     } catch(e) { alert('Erreur: ' + (e?.response?.data?.message || e.message)) }
@@ -73,7 +73,7 @@ export default function Drivers() {
 
   const approveDriver = async (d) => {
     try {
-      await driversService.approve(d.id)
+      await driversService.approve(d.profileId || d.id)
       setDrivers(prev => prev.map(x => x.id === d.id ? { ...x, accountStatus: 'ACTIVE', approvalStatus: 'APPROVED' } : x))
       if (selected?.id === d.id) setSelected(prev => ({ ...prev, accountStatus: 'ACTIVE', approvalStatus: 'APPROVED' }))
     } catch(e) { alert('Erreur: ' + (e?.response?.data?.message || e.message)) }
@@ -83,7 +83,7 @@ export default function Drivers() {
     const reason = prompt('Raison du rejet:')
     if (!reason) return
     try {
-      await driversService.reject(d.id, reason)
+      await driversService.reject(d.profileId || d.id, reason)
       setDrivers(prev => prev.map(x => x.id === d.id ? { ...x, accountStatus: 'REJECTED', approvalStatus: 'REJECTED', rejectionReason: reason } : x))
       if (selected?.id === d.id) setSelected(prev => ({ ...prev, accountStatus: 'REJECTED', approvalStatus: 'REJECTED', rejectionReason: reason }))
     } catch(e) { alert('Erreur: ' + (e?.response?.data?.message || e.message)) }
