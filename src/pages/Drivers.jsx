@@ -194,7 +194,7 @@ export default function Drivers() {
             </div>
 
             <div style={{ padding:'12px 16px', borderTop:'1px solid var(--border)' }}>
-              {['PENDING','ADMIN_REVIEW_PENDING','DOCUMENTS_PENDING'].includes(selected.accountStatus) && (
+              {!['ACTIVE','SUSPENDED','REJECTED'].includes(selected.accountStatus) && (
                 <div style={{ display:'flex', gap:8, marginBottom:8 }}>
                   <button onClick={() => approveDriver(selected)} className="btn btn-success btn-full" style={{ flex:1 }}>
                     ✓ Approuver
