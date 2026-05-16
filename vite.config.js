@@ -7,7 +7,7 @@ export default defineConfig({
     port: 3001,
     proxy: {
       '/api': {
-        target: 'https://koogwe22backend-production.up.railway.app',
+        target: 'https://koogwe2-2-backend-1.onrender.com',
         changeOrigin: true,
         secure: true,
         // On garde /api car le backend NestJS utilise déjà le préfixe /api
