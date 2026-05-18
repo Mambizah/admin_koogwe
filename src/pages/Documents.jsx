@@ -4,6 +4,7 @@ import { TopBar, StatusBadge, EmptyState, SearchBar, Modal, PageHeader, Loading 
 import { DOC_LABELS } from '../constants/documentTypes'
 import { documentsService } from '../services/api'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
+import { getDocumentSubmitterName } from '../utils/documentSubmitter'
 
 const FILTERS = ['ALL', 'PENDING', 'APPROVED', 'REJECTED']
 
@@ -34,7 +35,7 @@ export default function Documents() {
   useEffect(() => { loadDocuments() }, [loadDocuments])
   useRealtimeSync(loadDocuments, { interval: 20000, topics: ['document', 'documents'], enabled: true })
 
-  const getDriverName = doc => doc.driverName || doc.uploaderName || doc.userName || doc.user?.name || 'Inconnu'
+  const getDriverName = getDocumentSubmitterName
   const getFileUrl    = doc => doc.fileUrl || doc.url || null
   const formatDate    = d  => d ? new Date(d).toLocaleDateString('fr-FR') : '—'
 

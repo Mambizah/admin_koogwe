@@ -8,7 +8,9 @@ services:
     pullRequestPreviewsEnabled: true
     envVars:
       - key: VITE_API_URL
-        value: https://koogwe2-2-backend-1.onrender.com/api
+        value: https://web-production-ba8e89.up.railway.app/api
+      - key: VITE_SOCKET_URL
+        value: https://web-production-ba8e89.up.railway.app
     routes:
       - type: rewrite
         source: /*

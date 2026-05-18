@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { driversService, documentsService } from '../services/api'
 import { SearchBar, StatusBadge, Avatar, Loading, EmptyState, StatCard, InfoRow, FilterTabs } from '../components/UI'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
+import { getDocumentSubmitterName } from '../utils/documentSubmitter'
 
 export default function Drivers() {
   const [drivers,    setDrivers]    = useState([])
@@ -217,7 +218,10 @@ export default function Drivers() {
                   <div key={doc.id} style={{ padding:'8px 10px', background:'var(--surface2)', borderRadius:8, border:'1px solid var(--border)' }}>
                     <div style={{ fontSize:12, fontWeight:600 }}>{doc.type?.replace(/_/g,' ')}</div>
                     <div style={{ fontSize:11, color:'var(--text3)', marginTop:2 }}>
-                      {new Date(doc.createdAt).toLocaleDateString('fr-FR')}
+                      {getDocumentSubmitterName(doc)}
+                    </div>
+                    <div style={{ fontSize:11, color:'var(--text4)', marginTop:2 }}>
+                      {new Date(doc.uploadedAt || doc.createdAt).toLocaleDateString('fr-FR')}
                     </div>
                     <StatusBadge status={doc.status} style={{ marginTop:4 }}/>
                   </div>

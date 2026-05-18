@@ -11,10 +11,20 @@ const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || toSocketBase(API_BASE)
 
 const shouldRefreshForTopic = (topics, payload) => {
   if (!topics?.length || topics.includes('*')) return true
+  const event = String(payload?.event || '').toLowerCase()
   const topic = String(
-    payload?.topic || payload?.type || payload?.event || payload?.resource || payload?.channel || '*'
+    payload?.topic || payload?.type || payload?.resource || payload?.channel || ''
   ).toLowerCase()
-  return topics.map(t => String(t).toLowerCase()).includes(topic)
+  return topics.some((t) => {
+    const key = String(t).toLowerCase()
+    if (!key || key === '*') return true
+    return (
+      event === key ||
+      event.startsWith(`${key}:`) ||
+      topic === key ||
+      topic.startsWith(key)
+    )
+  })
 }
 
 export function useRealtimeSync(

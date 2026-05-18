@@ -3,6 +3,7 @@ import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContai
 import { StatCard, TopBar, StatusBadge, Avatar, EmptyState } from '../components/UI'
 import { dashboardService, driversService, passengersService, ridesService, financeService, documentsService } from '../services/api'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
+import { getDocumentSubmitterName } from '../utils/documentSubmitter'
 import api from '../services/api'
 
 const TT = { background:'rgba(255,255,255,0.97)', border:'1.5px solid rgba(43,95,245,0.15)', borderRadius:10, boxShadow:'0 8px 24px rgba(43,95,245,0.12)', fontSize:12, fontFamily:'Plus Jakarta Sans,sans-serif', color:'#0D1B4B' }
@@ -392,7 +393,7 @@ export default function Dashboard() {
                   </div>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:12,fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{doc.type?.replace(/_/g,' ')||'Document'}</div>
-                    <div style={{fontSize:11,color:'var(--text3)'}}>{doc.driverName||doc.uploaderName||'—'}</div>
+                    <div style={{fontSize:11,color:'var(--text3)'}}>{getDocumentSubmitterName(doc)}</div>
                   </div>
                   <StatusBadge status={doc.status}/>
                 </div>
@@ -461,8 +462,7 @@ export default function Dashboard() {
             </div>
             <div style={{display:'flex',flexDirection:'column',gap:8}}>
               {pendingDocs.slice(0,5).map(doc=>{
-                const submitterName = doc.driverName || doc.uploaderName ||
-                  [doc.user?.firstName, doc.user?.lastName].filter(Boolean).join(' ') || '—'
+                const submitterName = getDocumentSubmitterName(doc)
                 return (
                   <div key={doc.id} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 12px',background:'var(--surface2)',borderRadius:10,border:'1px solid var(--border)'}}>
                     <div style={{width:36,height:36,borderRadius:10,background:'rgba(245,158,11,0.10)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
