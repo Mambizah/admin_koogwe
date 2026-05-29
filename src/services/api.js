@@ -116,13 +116,26 @@ export const pricingService = {
   getConfig:    ()       => api.get('admin/config/pricing').catch(() => null),
 }
 
-// Config
+// Config plateforme (persistée API)
 export const adminConfigService = {
   get:              () => api.get('admin/config').catch(() => null),
   getPricing:       () => api.get('admin/config/pricing').catch(() => null),
+  updatePricing:    (body) => api.patch('admin/config/pricing', body),
   getFinancials:    () => api.get('admin/config/financials').catch(() => null),
+  updateFinancials: (body) => api.patch('admin/config/financials', body),
   getSecurity:      () => api.get('admin/config/security').catch(() => null),
+  updateSecurity:   (body) => api.patch('admin/config/security', body),
   getPayments:      () => api.get('admin/config/payments').catch(() => null),
+  updatePayments:   (body) => api.patch('admin/config/payments', body),
+  getPlatform:      () => api.get('admin/config/platform').catch(() => null),
+  updatePlatform:   (body) => api.patch('admin/config/platform', body),
+}
+
+export const hotZonesService = {
+  list:   () => api.get('admin/hot-zones'),
+  create: (body) => api.post('admin/hot-zones', body),
+  update: (id, body) => api.patch(`admin/hot-zones/${id}`, body),
+  remove: (id) => api.delete(`admin/hot-zones/${id}`),
 }
 
 export default api

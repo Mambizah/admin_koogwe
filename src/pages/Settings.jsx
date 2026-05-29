@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { PageHeader, TopBar } from '../components/UI'
-import { adminConfigService } from '../services/api'
+import { adminConfigService, hotZonesService } from '../services/api'
+import { HotZoneMapPicker } from '../components/HotZoneMapPicker'
 
 const TABS = [
   { id:'pricing',    label:'Tarification',  icon:'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
   { id:'financials', label:'Finances',       icon:'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M12 7h.01M9 7H7a2 2 0 00-2 2v9a2 2 0 002 2h10a2 2 0 002-2V9a2 2 0 00-2-2h-2' },
+  { id:'hotzones',   label:'Zones chaudes',  icon:'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z' },
   { id:'security',   label:'Sécurité',       icon:'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' },
   { id:'payments',   label:'Paiements',      icon:'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
   { id:'platform',   label:'Plateforme',     icon:'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' },
@@ -85,18 +87,47 @@ export default function Settings() {
     appName:'KOOGWE', supportEmail:'support@koogwe.com',
     maintenanceMode:false, registrationOpen:true,
     driverAutoApproval:false, maxDriversOnline:500,
+    driverSearchRadiusKm:30,
+  })
+
+  const [hotZones, setHotZones] = useState([])
+  const [newZone, setNewZone] = useState({
+    name:'Zone test', centerLat:4.93, centerLng:-52.33, radiusKm:2, surgeMultiplier:1.3,
   })
 
   const save = async () => {
     try {
       await Promise.allSettled([
-        adminConfigService.updatePricing({ baseFare:pricing.baseFare, pricePerKm:{MOTO:pricing.pricePerKmMoto,ECO:pricing.pricePerKmEco,CONFORT:pricing.pricePerKmConfort}, pricePerMinute:pricing.pricePerMinute, minimumFare:pricing.minimumFare, surgeMultiplier:pricing.maxSurge }),
-        adminConfigService.updateFinancials({ driverShare:financials.driverShare, platformCommission:financials.platformShare, currency:'XOF' }),
-        adminConfigService.updateSecurity({ jwtTtlMinutes:security.jwtTtlMinutes, refreshTtlDays:security.refreshTtlDays, geofencingEnabled:security.geofencingEnabled, sosEnabled:security.sosEnabled }),
-        adminConfigService.updatePayments({ stripeEnabled:payments.stripeEnabled, cashEnabled:payments.cashEnabled, walletEnabled:payments.walletEnabled }),
+        adminConfigService.updatePricing({
+          baseFare: pricing.baseFare,
+          pickupFee: pricing.pickupFee,
+          pricePerKm: {
+            MOTO: pricing.pricePerKmMoto,
+            ECO: pricing.pricePerKmEco,
+            CONFORT: pricing.pricePerKmConfort,
+          },
+          pricePerMinute: pricing.pricePerMinute,
+          minimumFare: pricing.minimumFare,
+          surgeMultiplier: pricing.maxSurge,
+          currency: pricing.currency,
+        }),
+        adminConfigService.updateFinancials({
+          driverShare: financials.driverShare,
+          platformCommission: financials.platformShare,
+          minWithdrawal: financials.minWithdrawal,
+          withdrawalFee: financials.withdrawalFee,
+          autoTransfer: financials.autoTransfer,
+          escrowEnabled: financials.escrowEnabled,
+        }),
+        adminConfigService.updateSecurity(security),
+        adminConfigService.updatePayments(payments),
+        adminConfigService.updatePlatform(platform),
       ])
-    } catch {}
-    setSaved(true)
+      setSaved(true)
+    } catch {
+      setSaved(false)
+      return
+    }
     setTimeout(() => setSaved(false), 3000)
   }
 
@@ -104,9 +135,13 @@ export default function Settings() {
   useEffect(() => {
     (async () => {
       try {
-        const [p, f] = await Promise.allSettled([
+        const [p, f, pay, sec, plat, zones] = await Promise.allSettled([
           adminConfigService.getPricing(),
           adminConfigService.getFinancials(),
+          adminConfigService.getPayments(),
+          adminConfigService.getSecurity(),
+          adminConfigService.getPlatform(),
+          hotZonesService.list(),
         ])
         if (p.value) {
           setPricing(prev => ({
@@ -118,6 +153,8 @@ export default function Settings() {
             pricePerMinute: p.value.pricePerMinute ?? prev.pricePerMinute,
             minimumFare: p.value.minimumFare ?? prev.minimumFare,
             maxSurge: p.value.surgeMultiplier ?? prev.maxSurge,
+            pickupFee: p.value.pickupFee ?? prev.pickupFee,
+            currency: p.value.currency ?? prev.currency,
           }))
         }
         if (f.value) {
@@ -125,8 +162,16 @@ export default function Settings() {
             ...prev,
             driverShare: f.value.driverShare ?? prev.driverShare,
             platformShare: f.value.platformCommission ?? prev.platformShare,
+            minWithdrawal: f.value.minWithdrawal ?? prev.minWithdrawal,
+            withdrawalFee: f.value.withdrawalFee ?? prev.withdrawalFee,
+            autoTransfer: f.value.autoTransfer ?? prev.autoTransfer,
+            escrowEnabled: f.value.escrowEnabled ?? prev.escrowEnabled,
           }))
         }
+        if (pay.value) setPayments(prev => ({ ...prev, ...pay.value }))
+        if (sec.value) setSecurity(prev => ({ ...prev, ...sec.value }))
+        if (plat.value) setPlatform(prev => ({ ...prev, ...plat.value }))
+        if (zones.value) setHotZones(Array.isArray(zones.value) ? zones.value : [])
       } catch {}
     })()
   }, [])
@@ -282,10 +327,61 @@ export default function Settings() {
                 </div>
               )}
 
+              {tab==='hotzones' && (
+                <div className="fade-in">
+                  <div style={{fontWeight:700,fontSize:16,marginBottom:6}}>Zones chaudes</div>
+                  <p style={{fontSize:13,color:'var(--text3)',marginBottom:24}}>Majoration automatique des courses dans ces zones (style Uber).</p>
+                  <SectionTitle>Nouvelle zone</SectionTitle>
+                  <div style={{marginBottom:16}}>
+                    <HotZoneMapPicker
+                      value={newZone}
+                      radiusKm={newZone.radiusKm}
+                      onChange={(next)=>setNewZone(prev=>({...prev,...next}))}
+                    />
+                  </div>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
+                    <InputRow label="Nom" value={newZone.name} onChange={v=>setNewZone({...newZone,name:v})} type="text"/>
+                    <InputRow label="Rayon" value={newZone.radiusKm} onChange={v=>setNewZone({...newZone,radiusKm:v})} unit="km" min={0.5} step={0.5}/>
+                    <InputRow label="Latitude centre" value={newZone.centerLat} onChange={v=>setNewZone({...newZone,centerLat:v})} step={0.0001}/>
+                    <InputRow label="Longitude centre" value={newZone.centerLng} onChange={v=>setNewZone({...newZone,centerLng:v})} step={0.0001}/>
+                    <InputRow label="Majoration" value={newZone.surgeMultiplier} onChange={v=>setNewZone({...newZone,surgeMultiplier:v})} unit="×" min={1} max={5} step={0.1}/>
+                  </div>
+                  <button className="btn btn-primary" style={{marginBottom:24}} onClick={async()=>{
+                    const z = await hotZonesService.create(newZone)
+                    setHotZones(prev=>[z,...prev])
+                  }}>Ajouter la zone</button>
+                  <SectionTitle>Zones actives</SectionTitle>
+                  {hotZones.length===0 && <p style={{fontSize:13,color:'var(--text3)'}}>Aucune zone configurée.</p>}
+                  {hotZones.map(z=>(
+                    <div key={z.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:12,border:'1px solid var(--border)',borderRadius:10,marginBottom:8}}>
+                      <div>
+                        <div style={{fontWeight:600,fontSize:13}}>{z.name}</div>
+                        <div style={{fontSize:12,color:'var(--text3)'}}>{z.radiusKm} km · ×{z.surgeMultiplier} · {z.centerLat?.toFixed(4)}, {z.centerLng?.toFixed(4)}</div>
+                      </div>
+                      <div style={{display:'flex',gap:8}}>
+                        <button className="btn" onClick={()=>setNewZone({
+                          name: z.name ?? 'Zone',
+                          centerLat: Number(z.centerLat ?? 4.93),
+                          centerLng: Number(z.centerLng ?? -52.33),
+                          radiusKm: Number(z.radiusKm ?? 2),
+                          surgeMultiplier: Number(z.surgeMultiplier ?? 1.3),
+                        })}>Éditer</button>
+                        <button className="btn" onClick={async()=>{
+                          await hotZonesService.remove(z.id)
+                          setHotZones(prev=>prev.filter(x=>x.id!==z.id))
+                        }}>Supprimer</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {tab==='platform' && (
                 <div className="fade-in">
                   <div style={{fontWeight:700,fontSize:16,marginBottom:6}}>Paramètres plateforme</div>
                   <p style={{fontSize:13,color:'var(--text3)',marginBottom:24}}>Configuration générale de l'application.</p>
+                  <SectionTitle>Chauffeurs & dispatch</SectionTitle>
+                  <InputRow label="Rayon réception courses" desc="Chauffeurs à cette distance reçoivent la demande" value={platform.driverSearchRadiusKm} onChange={v=>setPlatform({...platform,driverSearchRadiusKm:v})} unit="km" min={1} max={100} step={1}/>
                   <SectionTitle>Informations</SectionTitle>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
                     <InputRow label="Nom de l'application" value={platform.appName} onChange={v=>setPlatform({...platform,appName:v})} type="text"/>
