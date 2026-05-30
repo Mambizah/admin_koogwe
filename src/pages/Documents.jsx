@@ -78,6 +78,17 @@ export default function Documents() {
     setActionLoading(false)
   }
 
+  const deleteDocument = async (id) => {
+    if (!window.confirm('Supprimer ce document ? Action définitive.')) return
+    setActionLoading(true)
+    try {
+      await documentsService.remove(id)
+      setDocuments(prev => prev.filter(d => d.id !== id))
+      setSelected(null)
+    } catch (e) { alert('Erreur: ' + (e?.response?.data?.message || e.message)) }
+    setActionLoading(false)
+  }
+
   return (
     <div className="fade-in">
       <TopBar title="Documents" panicCount={0} />
@@ -142,6 +153,9 @@ export default function Documents() {
                         </button>
                       </>
                     )}
+                    <button className="btn btn-ghost btn-sm" style={{ color: 'var(--red)' }} onClick={() => deleteDocument(doc.id)} disabled={actionLoading}>
+                      Suppr.
+                    </button>
                   </div>
                 </div>
               </div>
@@ -197,6 +211,9 @@ export default function Documents() {
               </div>
             </>
           )}
+          <button className="btn btn-ghost btn-full" style={{ color: 'var(--red)', marginTop: 12 }} onClick={() => deleteDocument(selected.id)} disabled={actionLoading}>
+            Supprimer ce document
+          </button>
         </Modal>
       )}
     </div>

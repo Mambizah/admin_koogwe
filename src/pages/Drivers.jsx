@@ -90,6 +90,16 @@ export default function Drivers() {
     } catch(e) { alert('Erreur: ' + (e?.response?.data?.message || e.message)) }
   }
 
+  const deleteDriver = async (d) => {
+    const name = getDriverName(d)
+    if (!window.confirm(`Supprimer le chauffeur ${name} ? Compte et données associées seront effacés.`)) return
+    try {
+      await driversService.remove(d.id)
+      setDrivers(prev => prev.filter(x => x.id !== d.id))
+      if (selected?.id === d.id) setSelected(null)
+    } catch(e) { alert('Erreur: ' + (e?.response?.data?.message || e.message)) }
+  }
+
   const STATUS_OPTIONS = ['ALL', 'ACTIVE', 'PENDING', 'SUSPENDED', 'REJECTED']
 
   return (
@@ -153,10 +163,16 @@ export default function Drivers() {
                       </td>
                       <td><StatusBadge status={d.accountStatus || d.approvalStatus || 'PENDING'}/></td>
                       <td>
-                        <button onClick={e => { e.stopPropagation(); toggleSuspend(d) }}
-                          className={d.accountStatus === 'SUSPENDED' ? 'btn btn-success btn-sm' : 'btn btn-danger btn-sm'}>
-                          {d.accountStatus === 'SUSPENDED' ? 'Réactiver' : 'Suspendre'}
-                        </button>
+                        <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                          <button onClick={e => { e.stopPropagation(); toggleSuspend(d) }}
+                            className={d.accountStatus === 'SUSPENDED' ? 'btn btn-success btn-sm' : 'btn btn-danger btn-sm'}>
+                            {d.accountStatus === 'SUSPENDED' ? 'Réactiver' : 'Suspendre'}
+                          </button>
+                          <button onClick={e => { e.stopPropagation(); deleteDriver(d) }}
+                            className="btn btn-ghost btn-sm" style={{ color:'var(--red)' }}>
+                            Supprimer
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -206,8 +222,11 @@ export default function Drivers() {
                 </div>
               )}
               <button onClick={() => toggleSuspend(selected)}
-                className={selected.accountStatus === 'SUSPENDED' ? 'btn btn-success btn-full' : 'btn btn-danger btn-full'}>
+                className={selected.accountStatus === 'SUSPENDED' ? 'btn btn-success btn-full' : 'btn btn-danger btn-full'} style={{ marginBottom:8 }}>
                 {selected.accountStatus === 'SUSPENDED' ? '✅ Réactiver' : '🚫 Suspendre'}
+              </button>
+              <button onClick={() => deleteDriver(selected)} className="btn btn-ghost btn-full" style={{ color:'var(--red)' }}>
+                🗑 Supprimer le compte
               </button>
             </div>
 

@@ -73,6 +73,7 @@ export const driversService = {
   activate:  (id)        => api.patch(`admin/drivers/${id}/activate`),
   approve:   (id)        => api.patch(`admin/drivers/${id}/approval`, { approved: true }),
   reject:    (id, note)  => api.patch(`admin/drivers/${id}/approval`, { approved: false, adminNotes: note }),
+  remove:    (id)        => api.delete(`admin/drivers/${id}`),
 }
 
 // Documents
@@ -81,6 +82,7 @@ export const documentsService = {
   getPending: ()       => api.get('admin/documents?status=PENDING'),
   approve:    (id)     => api.patch(`admin/documents/${id}/approve`),
   reject:     (id, reason) => api.patch(`admin/documents/${id}/reject`, { reason }),
+  remove:     (id)     => api.delete(`admin/documents/${id}`),
 }
 
 // Passagers
@@ -88,12 +90,15 @@ export const passengersService = {
   getAll:   ()    => api.get('admin/passengers'),
   suspend:  (id)  => api.patch(`admin/passengers/${id}/suspend`),
   activate: (id)  => api.patch(`admin/passengers/${id}/activate`),
+  remove:   (id)  => api.delete(`admin/passengers/${id}`),
 }
 
 // Courses
 export const ridesService = {
   getAll:    (limit = 50) => api.get(`admin/rides?limit=${limit}`),
   getActive: ()           => api.get('admin/rides/active'),
+  remove:    (id)         => api.delete(`admin/rides/${id}`),
+  removeBulk:(status)     => api.delete(`admin/rides/bulk?status=${status}`),
 }
 
 // Finances

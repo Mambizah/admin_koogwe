@@ -7,6 +7,17 @@ import { useRealtimeSync } from '../hooks/useRealtimeSync'
 
 const TT = { background:'var(--surface)', border:'1.5px solid var(--border2)', borderRadius:10, boxShadow:'0 8px 24px rgba(43,95,245,0.12)', fontSize:12, fontFamily:'Plus Jakarta Sans,sans-serif', color:'var(--text)' }
 
+function driverLabel(r) {
+  if (r.driver?.name) return r.driver.name
+  if (r.status === 'REQUESTED') return 'Recherche…'
+  if (r.status === 'COMPLETED' || r.status === 'CANCELLED') return 'Non assigné'
+  return '—'
+}
+
+function confirmDelete(label) {
+  return window.confirm(`Supprimer ${label} ? Cette action est définitive.`)
+}
+
 // ── PASSAGERS ─────────────────────────────────────────────────────────────────
 export function Passengers() {
   const [passengers, setPassengers] = useState([])
@@ -40,6 +51,16 @@ export function Passengers() {
       else await passengersService.suspend(p.id)
       setPassengers(prev => prev.map(x => x.id === p.id ? { ...x, accountStatus: p.accountStatus === 'SUSPENDED' ? 'ACTIVE' : 'SUSPENDED' } : x))
       if (selected?.id === p.id) setSelected(prev => ({ ...prev, accountStatus: p.accountStatus === 'SUSPENDED' ? 'ACTIVE' : 'SUSPENDED' }))
+    } catch(e) { alert('Erreur: ' + (e?.response?.data?.message || e.message)) }
+  }
+
+  const deletePassenger = async (p) => {
+    const name = p.name || p.email || p.id
+    if (!confirmDelete(`le passager ${name}`)) return
+    try {
+      await passengersService.remove(p.id)
+      setPassengers(prev => prev.filter(x => x.id !== p.id))
+      if (selected?.id === p.id) setSelected(null)
     } catch(e) { alert('Erreur: ' + (e?.response?.data?.message || e.message)) }
   }
 
@@ -104,10 +125,16 @@ export function Passengers() {
                       </td>
                       <td><StatusBadge status={p.accountStatus}/></td>
                       <td>
-                        <button onClick={e => { e.stopPropagation(); toggleSuspend(p) }}
-                          className={p.accountStatus === 'SUSPENDED' ? 'btn btn-success btn-sm' : 'btn btn-danger btn-sm'}>
-                          {p.accountStatus === 'SUSPENDED' ? 'Réactiver' : 'Suspendre'}
-                        </button>
+                        <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                          <button onClick={e => { e.stopPropagation(); toggleSuspend(p) }}
+                            className={p.accountStatus === 'SUSPENDED' ? 'btn btn-success btn-sm' : 'btn btn-danger btn-sm'}>
+                            {p.accountStatus === 'SUSPENDED' ? 'Réactiver' : 'Suspendre'}
+                          </button>
+                          <button onClick={e => { e.stopPropagation(); deletePassenger(p) }}
+                            className="btn btn-ghost btn-sm" style={{ color:'var(--red)' }}>
+                            Supprimer
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -138,8 +165,11 @@ export function Passengers() {
             </div>
             <div style={{ padding:'12px 16px', borderTop:'1px solid var(--border)' }}>
               <button onClick={() => toggleSuspend(selected)}
-                className={selected.accountStatus === 'SUSPENDED' ? 'btn btn-success btn-full' : 'btn btn-danger btn-full'}>
+                className={selected.accountStatus === 'SUSPENDED' ? 'btn btn-success btn-full' : 'btn btn-danger btn-full'} style={{ marginBottom:8 }}>
                 {selected.accountStatus === 'SUSPENDED' ? '✅ Réactiver' : '🚫 Suspendre'}
+              </button>
+              <button onClick={() => deletePassenger(selected)} className="btn btn-ghost btn-full" style={{ color:'var(--red)' }}>
+                🗑 Supprimer le compte
               </button>
             </div>
           </div>
@@ -189,6 +219,25 @@ export function Rides() {
     revenue: rides.filter(r => r.status === 'COMPLETED').reduce((s,r) => s + (r.price||0), 0),
   }
 
+  const deleteRide = async (r) => {
+    const label = `#${r.id?.slice(-6)?.toUpperCase()}`
+    if (!confirmDelete(`la course ${label}`)) return
+    try {
+      await ridesService.remove(r.id)
+      setRides(prev => prev.filter(x => x.id !== r.id))
+    } catch(e) { alert('Erreur: ' + (e?.response?.data?.message || e.message)) }
+  }
+
+  const purgeRequested = async () => {
+    const count = rides.filter(r => r.status === 'REQUESTED').length
+    if (!count) { alert('Aucune course demandée à supprimer'); return }
+    if (!window.confirm(`Supprimer les ${count} courses « Demandées » ? Action définitive.`)) return
+    try {
+      await ridesService.removeBulk('REQUESTED')
+      setRides(prev => prev.filter(r => r.status !== 'REQUESTED'))
+    } catch(e) { alert('Erreur: ' + (e?.response?.data?.message || e.message)) }
+  }
+
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100vh' }}>
       <div style={{ padding:'22px 28px 20px', borderBottom:'1.5px solid var(--border)' }}>
@@ -214,6 +263,9 @@ export function Rides() {
         <div style={{ display:'flex', gap:10, alignItems:'center' }}>
           <SearchBar value={search} onChange={setSearch} placeholder="Rechercher chauffeur, passager, ID..."/>
           <FilterTabs options={FILTERS} value={filter} onChange={setFilter}/>
+          <button className="btn btn-danger btn-sm" onClick={purgeRequested} title="Nettoyer les courses de test">
+            Suppr. demandées
+          </button>
           <button className="btn btn-ghost btn-sm" onClick={load}>↻</button>
         </div>
 
@@ -227,7 +279,7 @@ export function Rides() {
           {loading ? <Loading/> : (
             <table>
               <thead>
-                <tr><th>ID</th><th>Date</th><th>Chauffeur</th><th>Passager</th><th>Type</th><th>Paiement</th><th>Statut</th><th>Prix</th></tr>
+                <tr><th>ID</th><th>Date</th><th>Chauffeur</th><th>Passager</th><th>Type</th><th>Paiement</th><th>Statut</th><th>Prix</th><th></th></tr>
               </thead>
               <tbody>
                 {filtered.map(r => (
@@ -241,7 +293,7 @@ export function Rides() {
                     <td>
                       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                         <Avatar name={r.driver?.name || '?'} size={28}/>
-                        <span style={{ fontSize:13 }}>{r.driver?.name || <span style={{ color:'var(--text4)', fontStyle:'italic' }}>En attente</span>}</span>
+                        <span style={{ fontSize:13 }}>{driverLabel(r)}</span>
                       </div>
                     </td>
                     <td style={{ fontSize:13 }}>{r.passenger?.name || '—'}</td>
@@ -259,6 +311,11 @@ export function Rides() {
                     <td><StatusBadge status={r.status}/></td>
                     <td style={{ fontWeight:700, color:r.price > 0 ? 'var(--text)' : 'var(--text4)' }}>
                       {r.price > 0 ? `€${r.price.toFixed(2)}` : '—'}
+                    </td>
+                    <td>
+                      <button className="btn btn-ghost btn-sm" style={{ color:'var(--red)' }} onClick={() => deleteRide(r)}>
+                        Supprimer
+                      </button>
                     </td>
                   </tr>
                 ))}
