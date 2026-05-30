@@ -52,9 +52,10 @@ export default function Login({ onLogin }) {
       // Appel du callback pour passer à l'interface admin
       onLogin({
         id: data.user.id,
-        name: data.user.name || 'Administrateur',
+        name: data.user.name || [data.user.firstName, data.user.lastName].filter(Boolean).join(' ') || 'Administrateur',
         email: data.user.email,
-        role: data.user.role
+        role: data.user.role,
+        adminRole: data.user.adminRole || 'SUPER_ADMIN',
       })
 
     } catch (err) {

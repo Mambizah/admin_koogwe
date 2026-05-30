@@ -61,6 +61,7 @@ export const authService = {
 // Dashboard
 export const dashboardService = {
   getStats:       () => api.get('admin/dashboard/stats'),
+  getTrends:      () => api.get('admin/dashboard/trends'),
   getRecentRides: () => api.get('admin/dashboard/rides/recent'),
   getPendingDocs: () => api.get('admin/dashboard/documents/pending'),
 }
@@ -78,11 +79,12 @@ export const driversService = {
 
 // Documents
 export const documentsService = {
-  getAll:     (status) => api.get(`admin/documents${status && status !== 'ALL' ? `?status=${status}` : ''}`),
-  getPending: ()       => api.get('admin/documents?status=PENDING'),
-  approve:    (id)     => api.patch(`admin/documents/${id}/approve`),
-  reject:     (id, reason) => api.patch(`admin/documents/${id}/reject`, { reason }),
-  remove:     (id)     => api.delete(`admin/documents/${id}`),
+  getAll:       (status) => api.get(`admin/documents${status && status !== 'ALL' ? `?status=${status}` : ''}`),
+  getPending:   ()       => api.get('admin/documents?status=PENDING'),
+  queueStats:   ()       => api.get('admin/documents/queue-stats').catch(() => null),
+  approve:      (id)     => api.patch(`admin/documents/${id}/approve`),
+  reject:       (id, reason) => api.patch(`admin/documents/${id}/reject`, { reason }),
+  remove:       (id)     => api.delete(`admin/documents/${id}`),
 }
 
 // Passagers
@@ -138,6 +140,62 @@ export const adminConfigService = {
   updateEmails:     (body) => api.patch('admin/config/emails', body),
   previewEmail:     (body) => api.post('admin/config/emails/preview', body),
   testEmail:        (body) => api.post('admin/config/emails/test', body),
+  getPricingRules:  () => api.get('admin/config/pricing-rules').catch(() => null),
+  updatePricingRules:(body) => api.patch('admin/config/pricing-rules', body),
+}
+
+export const liveService = {
+  getMap: () => api.get('admin/live/map'),
+}
+
+export const auditService = {
+  list: (params = {}) => {
+    const q = new URLSearchParams()
+    if (params.limit) q.set('limit', params.limit)
+    if (params.offset) q.set('offset', params.offset)
+    if (params.resourceType) q.set('resourceType', params.resourceType)
+    return api.get(`admin/audit-logs?${q}`)
+  },
+}
+
+export const notificationsAdminService = {
+  broadcast: (body) => api.post('admin/notifications/broadcast', body),
+}
+
+export const disputesService = {
+  list: (status) => api.get(`admin/disputes${status ? `?status=${status}` : ''}`),
+  create: (body) => api.post('admin/disputes', body),
+  update: (id, body) => api.patch(`admin/disputes/${id}`, body),
+  scanLowRatings: () => api.post('admin/disputes/scan-low-ratings'),
+}
+
+export const promosService = {
+  list: () => api.get('admin/promos'),
+  create: (body) => api.post('admin/promos', body),
+  update: (id, body) => api.patch(`admin/promos/${id}`, body),
+  remove: (id) => api.delete(`admin/promos/${id}`),
+}
+
+export const faqService = {
+  list: () => api.get('admin/faq'),
+  create: (body) => api.post('admin/faq', body),
+  update: (id, body) => api.patch(`admin/faq/${id}`, body),
+  remove: (id) => api.delete(`admin/faq/${id}`),
+}
+
+export const exportService = {
+  rides: (from, to) => `admin/export/rides${from || to ? `?from=${from || ''}&to=${to || ''}` : ''}`,
+  drivers: () => 'admin/export/drivers',
+  revenue: (from, to) => `admin/export/revenue${from || to ? `?from=${from || ''}&to=${to || ''}` : ''}`,
+}
+
+export const healthService = {
+  detailed: () => api.get('admin/health/detailed'),
+}
+
+export const adminsService = {
+  list: () => api.get('admin/admins'),
+  setRole: (id, adminRole) => api.patch(`admin/admins/${id}/role`, { adminRole }),
 }
 
 export const hotZonesService = {

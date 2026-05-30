@@ -17,14 +17,19 @@ export default function Documents() {
   const [selected,      setSelected]      = useState(null)
   const [reason,        setReason]        = useState('')
   const [actionLoading, setActionLoading] = useState(false)
+  const [queueStats, setQueueStats] = useState(null)
 
   const loadDocuments = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const response = await documentsService.getAll(statusFilter)
+      const [response, stats] = await Promise.all([
+        documentsService.getAll(statusFilter),
+        documentsService.queueStats(),
+      ])
       const list = Array.isArray(response) ? response : response?.items || []
       setDocuments(list)
+      if (stats) setQueueStats(stats)
     } catch (err) {
       setError('Impossible de charger les documents.')
     } finally {
@@ -99,6 +104,22 @@ export default function Documents() {
             <RefreshCw size={14} /> Rafraîchir
           </button>
         </PageHeader>
+
+        {queueStats && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+            {[
+              ['En attente', queueStats.pending ?? queueStats.PENDING ?? 0, 'var(--orange)'],
+              ['Approuvés', queueStats.approved ?? queueStats.APPROVED ?? 0, 'var(--green)'],
+              ['Refusés', queueStats.rejected ?? queueStats.REJECTED ?? 0, 'var(--red)'],
+              ['Total', queueStats.total ?? 0, 'var(--blue)'],
+            ].map(([label, val, color]) => (
+              <div key={label} className="card" style={{ padding: 16, borderTop: `3px solid ${color}` }}>
+                <div style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 600 }}>{label}</div>
+                <div style={{ fontSize: 24, fontWeight: 800, marginTop: 4 }}>{val}</div>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
           <SearchBar value={search} onChange={setSearch} placeholder="Rechercher un chauffeur..." />

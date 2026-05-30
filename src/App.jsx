@@ -6,6 +6,12 @@ import Dashboard from './pages/Dashboard'
 import Documents from './pages/Documents'
 import Drivers from './pages/Drivers'
 import Settings from './pages/Settings'
+import LiveMap from './pages/LiveMap'
+import AuditLog from './pages/AuditLog'
+import Notifications from './pages/Notifications'
+import Disputes from './pages/Disputes'
+import Promos from './pages/Promos'
+import Reports from './pages/Reports'
 import { Passengers, Rides, Revenue, Panics } from './pages/Pages'
 import { documentsService, panicsService } from './services/api'
 import { useRealtimeSync } from './hooks/useRealtimeSync'
@@ -70,15 +76,21 @@ export default function App() {
         <Sidebar badges={badges} user={user} onLogout={logout} />
         <main style={{ marginLeft: 'var(--sidebar-w)', flex: 1, minHeight: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <Routes>
-            <Route path="/"           element={<Dashboard />} />
-            <Route path="/drivers"    element={<Drivers />} />
-            <Route path="/documents"  element={<Documents />} />
-            <Route path="/revenue"    element={<Revenue />} />
-            <Route path="/panics"     element={<Panics />} />
-            <Route path="/passengers" element={<Passengers />} />
-            <Route path="/rides"      element={<Rides />} />
-            <Route path="/settings"   element={<Settings />} />
-            <Route path="*"           element={<Navigate to="/" />} />
+            <Route path="/"              element={<Dashboard />} />
+            <Route path="/live"          element={<LiveMap />} />
+            <Route path="/drivers"       element={<Drivers />} />
+            <Route path="/passengers"    element={<Passengers />} />
+            <Route path="/rides"         element={<Rides />} />
+            <Route path="/documents"     element={<Documents />} />
+            <Route path="/disputes"      element={<Disputes />} />
+            <Route path="/revenue"       element={<Revenue />} />
+            <Route path="/promos"        element={<Promos />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/audit"         element={<AuditLog />} />
+            <Route path="/reports"       element={<Reports />} />
+            <Route path="/panics"        element={<Panics />} />
+            <Route path="/settings"      element={<Settings />} />
+            <Route path="*"              element={<Navigate to="/" />} />
           </Routes>
         </main>
       </div>

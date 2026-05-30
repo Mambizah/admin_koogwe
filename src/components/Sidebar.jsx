@@ -1,17 +1,24 @@
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, UserCircle, ArrowLeftRight, 
-  FileText, Wallet, AlertTriangle, Settings, LogOut 
+  FileText, Wallet, AlertTriangle, Settings, LogOut,
+  Map, ScrollText, Bell, Scale, Tag, BarChart3,
 } from 'lucide-react';
 import logoPng from '../assets/logo.png';
 
 const NAV = [
   { to:'/',           label:'Tableau de bord',  icon: LayoutDashboard },
+  { to:'/live',       label:'Carte live',        icon: Map },
   { to:'/drivers',    label:'Chauffeurs',        icon: Users },
   { to:'/passengers', label:'Passagers',         icon: UserCircle },
   { to:'/rides',      label:'Courses',           icon: ArrowLeftRight },
   { to:'/documents',  label:'Documents',         icon: FileText, badge:'docs' },
+  { to:'/disputes',   label:'Litiges',           icon: Scale },
   { to:'/revenue',    label:'Revenus',           icon: Wallet },
+  { to:'/promos',     label:'Promos',            icon: Tag },
+  { to:'/notifications', label:'Notifications',  icon: Bell },
+  { to:'/audit',      label:'Journal audit',     icon: ScrollText },
+  { to:'/reports',    label:'Rapports',          icon: BarChart3 },
   { to:'/panics',     label:'Alertes Panique',   icon: AlertTriangle, badge:'panics', danger:true },
   { to:'/settings',   label:'Paramètres',        icon: Settings },
 ]

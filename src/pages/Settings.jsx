@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { PageHeader, TopBar } from '../components/UI'
-import { adminConfigService, hotZonesService } from '../services/api'
+import { adminConfigService, hotZonesService, faqService, adminsService } from '../services/api'
+import { useAdminWrite } from '../hooks/useAdminWrite'
 import { HotZoneMapPicker } from '../components/HotZoneMapPicker'
 
 const TABS = [
@@ -11,6 +12,9 @@ const TABS = [
   { id:'payments',   label:'Paiements',      icon:'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
   { id:'emails',     label:'Emails',         icon:'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
   { id:'platform',   label:'Plateforme',     icon:'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' },
+  { id:'pricing-rules', label:'Horaires tarifs', icon:'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+  { id:'faq',        label:'FAQ / Messages', icon:'M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+  { id:'admins',     label:'Rôles admin',    icon:'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
 ]
 
 const EMAIL_KEYS = [
@@ -75,6 +79,7 @@ function InputRow({ label, desc, value, onChange, type='number', unit, min, max,
 }
 
 export default function Settings() {
+  const canWrite = useAdminWrite()
   const [tab, setTab] = useState('pricing')
   const [saved, setSaved] = useState(false)
 
@@ -104,7 +109,18 @@ export default function Settings() {
     maintenanceMode:false, registrationOpen:true,
     driverAutoApproval:false, maxDriversOnline:500,
     driverSearchRadiusKm:30,
+    minPassengerAppVersion:'2.2.0', minDriverAppVersion:'2.2.0',
+    latestPassengerAppVersion:'2.2.0', latestDriverAppVersion:'2.2.0',
+    forceUpdate:false, inAppMessage:'',
   })
+  const [pricingRules, setPricingRules] = useState({
+    nightStartHour: 22, nightEndHour: 6, nightMultiplier: 1.4,
+    weekendMultiplier: 1.15,
+    peakHours: [{ start: 7, end: 9, multiplier: 1.3 }, { start: 17, end: 20, multiplier: 1.3 }],
+  })
+  const [faqList, setFaqList] = useState([])
+  const [faqForm, setFaqForm] = useState({ questionFr: '', answerFr: '', category: 'general' })
+  const [adminUsers, setAdminUsers] = useState([])
 
   const [hotZones, setHotZones] = useState([])
   const [emailTemplates, setEmailTemplates] = useState(DEFAULT_EMAILS)
@@ -144,6 +160,7 @@ export default function Settings() {
         adminConfigService.updatePayments(payments),
         adminConfigService.updatePlatform(platform),
         adminConfigService.updateEmails(emailTemplates),
+        adminConfigService.updatePricingRules(pricingRules),
       ])
       setSaved(true)
     } catch {
@@ -157,7 +174,7 @@ export default function Settings() {
   useEffect(() => {
     (async () => {
       try {
-        const [p, f, pay, sec, plat, zones, emails] = await Promise.allSettled([
+        const [p, f, pay, sec, plat, zones, emails, rules, faq, admins] = await Promise.allSettled([
           adminConfigService.getPricing(),
           adminConfigService.getFinancials(),
           adminConfigService.getPayments(),
@@ -165,6 +182,9 @@ export default function Settings() {
           adminConfigService.getPlatform(),
           hotZonesService.list(),
           adminConfigService.getEmails(),
+          adminConfigService.getPricingRules(),
+          faqService.list(),
+          adminsService.list(),
         ])
         if (p.value) {
           setPricing(prev => ({
@@ -204,6 +224,9 @@ export default function Settings() {
             return next
           })
         }
+        if (rules.value) setPricingRules(prev => ({ ...prev, ...rules.value }))
+        if (faq.value) setFaqList(Array.isArray(faq.value) ? faq.value : [])
+        if (admins.value) setAdminUsers(Array.isArray(admins.value) ? admins.value : [])
       } catch {}
     })()
   }, [])
@@ -539,12 +562,93 @@ export default function Settings() {
                   <ToggleRow label="Mode maintenance" desc="Suspend l'accès à l'application" value={platform.maintenanceMode} onChange={v=>setPlatform({...platform,maintenanceMode:v})}/>
                   <ToggleRow label="Inscriptions ouvertes" desc="Autoriser les nouvelles inscriptions" value={platform.registrationOpen} onChange={v=>setPlatform({...platform,registrationOpen:v})}/>
                   <ToggleRow label="Approbation automatique chauffeurs" desc="Active les comptes sans vérification admin" value={platform.driverAutoApproval} onChange={v=>setPlatform({...platform,driverAutoApproval:v})}/>
+                  <SectionTitle>Versions apps mobile</SectionTitle>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+                    <InputRow label="Min. passager" value={platform.minPassengerAppVersion} onChange={v=>setPlatform({...platform,minPassengerAppVersion:v})} type="text"/>
+                    <InputRow label="Min. chauffeur" value={platform.minDriverAppVersion} onChange={v=>setPlatform({...platform,minDriverAppVersion:v})} type="text"/>
+                    <InputRow label="Dernière passager" value={platform.latestPassengerAppVersion} onChange={v=>setPlatform({...platform,latestPassengerAppVersion:v})} type="text"/>
+                    <InputRow label="Dernière chauffeur" value={platform.latestDriverAppVersion} onChange={v=>setPlatform({...platform,latestDriverAppVersion:v})} type="text"/>
+                  </div>
+                  <ToggleRow label="Forcer mise à jour" desc="Bloque les apps sous la version minimale" value={platform.forceUpdate} onChange={v=>setPlatform({...platform,forceUpdate:v})}/>
+                  <SectionTitle>Message in-app</SectionTitle>
+                  <textarea className="input" rows={3} value={platform.inAppMessage || ''} onChange={e=>setPlatform({...platform,inAppMessage:e.target.value})} placeholder="Annonce visible dans l'app sans rebuild…"/>
                   {platform.maintenanceMode && (
                     <div style={{marginTop:16,padding:'12px 16px',background:'rgba(239,68,68,0.07)',border:'1.5px solid rgba(239,68,68,0.2)',borderRadius:10}}>
                       <div style={{fontSize:13,fontWeight:600,color:'var(--red)'}}>Mode maintenance actif</div>
                       <div style={{fontSize:12,color:'var(--text3)',marginTop:3}}>L'application est inaccessible aux utilisateurs.</div>
                     </div>
                   )}
+                </div>
+              )}
+
+              {tab==='pricing-rules' && (
+                <div className="fade-in">
+                  <div style={{fontWeight:700,fontSize:16,marginBottom:6}}>Horaires & tarifs dynamiques</div>
+                  <p style={{fontSize:13,color:'var(--text3)',marginBottom:24}}>Majorations nuit, week-end et heures de pointe.</p>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16,marginBottom:16}}>
+                    <InputRow label="Début nuit (h)" value={pricingRules.nightStartHour} onChange={v=>setPricingRules({...pricingRules,nightStartHour:v})} min={0} max={23}/>
+                    <InputRow label="Fin nuit (h)" value={pricingRules.nightEndHour} onChange={v=>setPricingRules({...pricingRules,nightEndHour:v})} min={0} max={23}/>
+                    <InputRow label="Coef. nuit" value={pricingRules.nightMultiplier} onChange={v=>setPricingRules({...pricingRules,nightMultiplier:v})} unit="×" step={0.05} min={1}/>
+                    <InputRow label="Coef. week-end" value={pricingRules.weekendMultiplier} onChange={v=>setPricingRules({...pricingRules,weekendMultiplier:v})} unit="×" step={0.05} min={1}/>
+                  </div>
+                  <SectionTitle>Heures de pointe</SectionTitle>
+                  {(pricingRules.peakHours || []).map((p, i) => (
+                    <div key={i} style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:12,marginBottom:12,alignItems:'end'}}>
+                      <InputRow label="Début" value={p.start} onChange={v=>{ const ph=[...pricingRules.peakHours]; ph[i]={...ph[i],start:v}; setPricingRules({...pricingRules,peakHours:ph})}} min={0} max={23}/>
+                      <InputRow label="Fin" value={p.end} onChange={v=>{ const ph=[...pricingRules.peakHours]; ph[i]={...ph[i],end:v}; setPricingRules({...pricingRules,peakHours:ph})}} min={0} max={23}/>
+                      <InputRow label="Coef." value={p.multiplier} onChange={v=>{ const ph=[...pricingRules.peakHours]; ph[i]={...ph[i],multiplier:v}; setPricingRules({...pricingRules,peakHours:ph})}} step={0.05} min={1}/>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {tab==='faq' && (
+                <div className="fade-in">
+                  <div style={{fontWeight:700,fontSize:16,marginBottom:6}}>FAQ & messages in-app</div>
+                  <p style={{fontSize:13,color:'var(--text3)',marginBottom:24}}>Contenu affiché dans les apps sans rebuild.</p>
+                  {canWrite && (
+                    <div className="card" style={{padding:16,marginBottom:20}}>
+                      <InputRow label="Question FR" value={faqForm.questionFr} onChange={v=>setFaqForm({...faqForm,questionFr:v})} type="text"/>
+                      <textarea className="input" rows={3} value={faqForm.answerFr} onChange={e=>setFaqForm({...faqForm,answerFr:e.target.value})} placeholder="Réponse FR" style={{width:'100%',marginBottom:12}}/>
+                      <button className="btn btn-primary" onClick={async()=>{
+                        await faqService.create(faqForm)
+                        setFaqForm({ questionFr:'', answerFr:'', category:'general' })
+                        const list = await faqService.list()
+                        setFaqList(list)
+                      }}>Ajouter</button>
+                    </div>
+                  )}
+                  {faqList.map(f => (
+                    <div key={f.id} className="card" style={{padding:16,marginBottom:10,display:'flex',justifyContent:'space-between',gap:12}}>
+                      <div><div style={{fontWeight:600}}>{f.questionFr}</div><div style={{fontSize:13,color:'var(--text3)',marginTop:4}}>{f.answerFr}</div></div>
+                      {canWrite && <button className="btn btn-sm btn-danger" onClick={async()=>{ await faqService.remove(f.id); setFaqList(await faqService.list()) }}>Suppr.</button>}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {tab==='admins' && (
+                <div className="fade-in">
+                  <div style={{fontWeight:700,fontSize:16,marginBottom:6}}>Rôles administrateur</div>
+                  <p style={{fontSize:13,color:'var(--text3)',marginBottom:24}}>SUPER_ADMIN = tout · SUPPORT = écriture · READONLY = lecture seule</p>
+                  {adminUsers.map(a => (
+                    <div key={a.id} style={{display:'flex',alignItems:'center',gap:12,padding:14,border:'1.5px solid var(--border)',borderRadius:10,marginBottom:10}}>
+                      <div style={{flex:1}}>
+                        <div style={{fontWeight:600}}>{a.email}</div>
+                        <div style={{fontSize:12,color:'var(--text3)'}}>{[a.firstName,a.lastName].filter(Boolean).join(' ') || '—'}</div>
+                      </div>
+                      {canWrite ? (
+                        <select className="input" value={a.adminRole || 'SUPER_ADMIN'} style={{maxWidth:160}}
+                          onChange={async e=>{ await adminsService.setRole(a.id, e.target.value); setAdminUsers(await adminsService.list()) }}>
+                          <option value="SUPER_ADMIN">Super admin</option>
+                          <option value="SUPPORT">Support</option>
+                          <option value="READONLY">Lecture seule</option>
+                        </select>
+                      ) : (
+                        <span className="badge badge-blue">{a.adminRole || 'SUPER_ADMIN'}</span>
+                      )}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

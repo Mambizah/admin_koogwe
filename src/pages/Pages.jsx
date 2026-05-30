@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { SearchBar, FilterTabs, StatusBadge, Avatar, Loading, EmptyState, StatCard, InfoRow, TopBar } from '../components/UI'
 import { passengersService, ridesService, financeService, panicsService } from '../services/api'
+import { downloadCsv } from '../utils/export'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
 
 const TT = { background:'var(--surface)', border:'1.5px solid var(--border2)', borderRadius:10, boxShadow:'0 8px 24px rgba(43,95,245,0.12)', fontSize:12, fontFamily:'Plus Jakarta Sans,sans-serif', color:'var(--text)' }
@@ -390,7 +391,7 @@ export function Revenue() {
           <h1 style={{ fontFamily:'Sora,sans-serif', fontSize:22, fontWeight:800, marginBottom:4, color:'var(--text)' }}>Gestion des Revenus</h1>
           <p style={{ fontSize:13, color:'var(--text2)' }}>Aperçu financier et suivi des transactions</p>
         </div>
-        <button className="btn btn-primary">
+        <button className="btn btn-primary" onClick={() => downloadCsv('admin/export/revenue', `koogwe-revenus-${Date.now()}.csv`)}>
           <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Exporter CSV
         </button>

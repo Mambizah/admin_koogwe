@@ -6,6 +6,8 @@ import { useRealtimeSync } from '../hooks/useRealtimeSync'
 import { getDocumentSubmitterName } from '../utils/documentSubmitter'
 import api from '../services/api'
 
+const fmtTrend = (n) => (n == null || Number.isNaN(n) ? '' : `${n >= 0 ? '+' : ''}${n}%`)
+
 const TT = { background:'rgba(255,255,255,0.97)', border:'1.5px solid rgba(43,95,245,0.15)', borderRadius:10, boxShadow:'0 8px 24px rgba(43,95,245,0.12)', fontSize:12, fontFamily:'Plus Jakarta Sans,sans-serif', color:'#0D1B4B' }
 
 function DonutChart({ data, colors }) {
@@ -178,10 +180,11 @@ export default function Dashboard() {
   const [revenue,    setRevenue]    = useState({})
   const [chart,      setChart]      = useState([])
   const [activeRides,setActiveRides]= useState([])
+  const [trends, setTrends] = useState(null)
 
   const load = useCallback(async () => {
     try {
-      const [s, r, d, drv, pax, rev, chartData, active] = await Promise.allSettled([
+      const [s, r, d, drv, pax, rev, chartData, active, tr] = await Promise.allSettled([
         dashboardService.getStats(),
         dashboardService.getRecentRides(),
         dashboardService.getPendingDocs(),
@@ -190,6 +193,7 @@ export default function Dashboard() {
         financeService.getStats(),
         financeService.getChart('weekly'),
         ridesService.getActive(),
+        dashboardService.getTrends(),
       ])
       if (s.value)   setStats(s.value)
       if (r.value && Array.isArray(r.value)) setRides(r.value)
@@ -223,6 +227,7 @@ export default function Dashboard() {
         setChart(Object.values(grouped).slice(-7))
       }
       if (active.value && Array.isArray(active.value)) setActiveRides(active.value)
+      if (tr.value) setTrends(tr.value)
     } catch {}
   }, [])
 
@@ -267,13 +272,13 @@ export default function Dashboard() {
 
         {/* KPI Row */}
         <div className="stagger" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16,marginBottom:24}}>
-          <StatCard label="Chauffeurs actifs"  value={activeDrivers} sub={`${drivers.length || stats.drivers?.total || 0} inscrits au total`} trend="" color="#2B5FF5"
+          <StatCard label="Chauffeurs actifs"  value={trends?.drivers?.activeOnline ?? activeDrivers} sub={`${drivers.length || stats.drivers?.total || 0} inscrits · ${trends?.drivers?.value ?? 0} nouveaux ce mois`} trend={fmtTrend(trends?.drivers?.trend)} color="#2B5FF5"
             iconPath="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" delay={0}/>
-          <StatCard label="Passagers inscrits" value={totalPassengers || stats.passengers?.total || 0} sub={`${activePassengers} actifs`} trend="" color="#10B981"
+          <StatCard label="Passagers inscrits" value={totalPassengers || stats.passengers?.total || 0} sub={`${activePassengers} actifs · ${trends?.passengers?.value ?? 0} nouveaux ce mois`} trend={fmtTrend(trends?.passengers?.trend)} color="#10B981"
             iconPath="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" delay={60}/>
-          <StatCard label="Courses actives"    value={activeRides.length || stats.rides?.active || 0} sub={`${stats.rides?.total || 0} au total`} trend="" color="#F59E0B"
+          <StatCard label="Courses actives"    value={activeRides.length || stats.rides?.active || 0} sub={`${stats.rides?.total || 0} au total · ${trends?.rides?.value ?? 0} ce mois`} trend={fmtTrend(trends?.rides?.trend)} color="#F59E0B"
             iconPath="M8 7h12m0 0l-4-4m4 4l-4 4m0 5H4m0 0l4 4m-4-4l4-4" delay={120}/>
-          <StatCard label="Revenu total"        value={`€${totalRevenue}`} sub={`€${dailyRevenue}/jour en moy.`} trend="" color="#8B5CF6"
+          <StatCard label="Revenu total"        value={`€${totalRevenue}`} sub={`€${dailyRevenue}/jour en moy.`} trend={fmtTrend(trends?.revenue?.trend)} color="#8B5CF6"
             iconPath="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" delay={180}/>
         </div>
 
