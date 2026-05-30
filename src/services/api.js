@@ -160,6 +160,13 @@ export const auditService = {
 
 export const notificationsAdminService = {
   broadcast: (body) => api.post('admin/notifications/broadcast', body),
+  searchUsers: (q, role) => {
+    const params = new URLSearchParams()
+    if (q) params.set('q', q)
+    if (role) params.set('role', role)
+    return api.get(`admin/notifications/users?${params}`)
+  },
+  sendToUser: (body) => api.post('admin/notifications/send', body),
 }
 
 export const disputesService = {
