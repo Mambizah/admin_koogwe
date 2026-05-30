@@ -134,6 +134,10 @@ export const adminConfigService = {
   updatePayments:   (body) => api.patch('admin/config/payments', body),
   getPlatform:      () => api.get('admin/config/platform').catch(() => null),
   updatePlatform:   (body) => api.patch('admin/config/platform', body),
+  getEmails:        () => api.get('admin/config/emails').catch(() => null),
+  updateEmails:     (body) => api.patch('admin/config/emails', body),
+  previewEmail:     (body) => api.post('admin/config/emails/preview', body),
+  testEmail:        (body) => api.post('admin/config/emails/test', body),
 }
 
 export const hotZonesService = {

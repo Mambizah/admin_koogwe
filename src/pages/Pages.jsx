@@ -30,7 +30,12 @@ export function Passengers() {
     setLoading(true); setError(null)
     try {
       const d = await passengersService.getAll()
-      const list = Array.isArray(d) ? d : (d?.items ?? [])
+      const raw = Array.isArray(d) ? d : (d?.items ?? [])
+      const list = raw.map((p) => ({
+        ...p,
+        name: p.name || [p.firstName, p.lastName].filter(Boolean).join(' ') || p.email || '—',
+        totalRides: p.totalRides ?? p._count?.passengerRides ?? 0,
+      }))
       setPassengers(list)
     } catch(e) {
       setError(e?.response?.data?.message || 'Erreur de chargement')

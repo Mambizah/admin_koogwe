@@ -9,8 +9,24 @@ const TABS = [
   { id:'hotzones',   label:'Zones chaudes',  icon:'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z' },
   { id:'security',   label:'Sécurité',       icon:'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' },
   { id:'payments',   label:'Paiements',      icon:'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
+  { id:'emails',     label:'Emails',         icon:'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
   { id:'platform',   label:'Plateforme',     icon:'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' },
 ]
+
+const EMAIL_KEYS = [
+  'otp', 'welcome', 'ride_confirmation', 'driver_approved',
+  'driver_rejected', 'payment_confirmation', 'card_registered',
+]
+
+const DEFAULT_EMAILS = {
+  otp: { label:'Code de validation (OTP)', enabled:true, useEmojis:true, subjectFr:'', subjectEn:'', bodyFr:'', bodyEn:'', variables:['code','appName','supportEmail'] },
+  welcome: { label:'Bienvenue', enabled:true, useEmojis:true, subjectFr:'', subjectEn:'', bodyFr:'', bodyEn:'', variables:['firstName','appName','supportEmail'] },
+  ride_confirmation: { label:'Confirmation de course', enabled:true, useEmojis:true, subjectFr:'', subjectEn:'', bodyFr:'', bodyEn:'', variables:['firstName','rideId','driverName','amount','appName'] },
+  driver_approved: { label:'Chauffeur approuvé', enabled:true, useEmojis:true, subjectFr:'', subjectEn:'', bodyFr:'', bodyEn:'', variables:['firstName','appName','supportEmail'] },
+  driver_rejected: { label:'Chauffeur refusé', enabled:true, useEmojis:false, subjectFr:'', subjectEn:'', bodyFr:'', bodyEn:'', variables:['firstName','reason','appName','supportEmail'] },
+  payment_confirmation: { label:'Confirmation paiement', enabled:true, useEmojis:true, subjectFr:'', subjectEn:'', bodyFr:'', bodyEn:'', variables:['firstName','amount','appName'] },
+  card_registered: { label:'Carte enregistrée', enabled:true, useEmojis:true, subjectFr:'', subjectEn:'', bodyFr:'', bodyEn:'', variables:['firstName','brand','last4','appName','supportEmail'] },
+}
 
 function SectionTitle({ children }) {
   return <div style={{fontSize:11,fontWeight:700,letterSpacing:'0.08em',textTransform:'uppercase',color:'var(--text3)',marginBottom:16,marginTop:8,display:'flex',alignItems:'center',gap:8}}>
@@ -91,6 +107,11 @@ export default function Settings() {
   })
 
   const [hotZones, setHotZones] = useState([])
+  const [emailTemplates, setEmailTemplates] = useState(DEFAULT_EMAILS)
+  const [emailKey, setEmailKey] = useState('otp')
+  const [emailPreview, setEmailPreview] = useState(null)
+  const [testEmailTo, setTestEmailTo] = useState('')
+  const [emailMsg, setEmailMsg] = useState('')
   const [newZone, setNewZone] = useState({
     name:'Zone test', centerLat:4.93, centerLng:-52.33, radiusKm:2, surgeMultiplier:1.3,
   })
@@ -122,6 +143,7 @@ export default function Settings() {
         adminConfigService.updateSecurity(security),
         adminConfigService.updatePayments(payments),
         adminConfigService.updatePlatform(platform),
+        adminConfigService.updateEmails(emailTemplates),
       ])
       setSaved(true)
     } catch {
@@ -135,13 +157,14 @@ export default function Settings() {
   useEffect(() => {
     (async () => {
       try {
-        const [p, f, pay, sec, plat, zones] = await Promise.allSettled([
+        const [p, f, pay, sec, plat, zones, emails] = await Promise.allSettled([
           adminConfigService.getPricing(),
           adminConfigService.getFinancials(),
           adminConfigService.getPayments(),
           adminConfigService.getSecurity(),
           adminConfigService.getPlatform(),
           hotZonesService.list(),
+          adminConfigService.getEmails(),
         ])
         if (p.value) {
           setPricing(prev => ({
@@ -172,9 +195,59 @@ export default function Settings() {
         if (sec.value) setSecurity(prev => ({ ...prev, ...sec.value }))
         if (plat.value) setPlatform(prev => ({ ...prev, ...plat.value }))
         if (zones.value) setHotZones(Array.isArray(zones.value) ? zones.value : [])
+        if (emails.value) {
+          setEmailTemplates(prev => {
+            const next = { ...prev }
+            for (const k of EMAIL_KEYS) {
+              if (emails.value[k]) next[k] = { ...prev[k], ...emails.value[k] }
+            }
+            return next
+          })
+        }
       } catch {}
     })()
   }, [])
+
+  const currentEmail = emailTemplates[emailKey] ?? DEFAULT_EMAILS[emailKey]
+
+  const patchEmail = (patch) => {
+    setEmailTemplates(prev => ({
+      ...prev,
+      [emailKey]: { ...prev[emailKey], ...patch },
+    }))
+    setEmailPreview(null)
+  }
+
+  const loadPreview = async (lang = 'fr') => {
+    try {
+      const tpl = emailTemplates[emailKey]
+      const res = await adminConfigService.previewEmail({
+        key: emailKey,
+        language: lang,
+        patch: {
+          subjectFr: tpl.subjectFr,
+          subjectEn: tpl.subjectEn,
+          bodyFr: tpl.bodyFr,
+          bodyEn: tpl.bodyEn,
+          useEmojis: tpl.useEmojis,
+        },
+      })
+      setEmailPreview(res)
+    } catch {
+      setEmailMsg('Erreur aperçu')
+    }
+  }
+
+  const sendTest = async () => {
+    if (!testEmailTo) return
+    try {
+      await adminConfigService.testEmail({ key: emailKey, to: testEmailTo, language: 'fr' })
+      setEmailMsg(`Test envoyé à ${testEmailTo}`)
+      setTimeout(() => setEmailMsg(''), 4000)
+    } catch {
+      setEmailMsg('Échec envoi test')
+    }
+  }
 
   const Icon = ({path}) => (
     <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round"><path d={path}/></svg>
@@ -373,6 +446,80 @@ export default function Settings() {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {tab==='emails' && (
+                <div className="fade-in">
+                  <div style={{fontWeight:700,fontSize:16,marginBottom:6}}>Modèles d'emails</div>
+                  <p style={{fontSize:13,color:'var(--text3)',marginBottom:24}}>
+                    Personnalisez les emails envoyés aux passagers et chauffeurs. Utilisez les variables entre doubles accolades, ex. {'{{firstName}}'}.
+                  </p>
+                  <div style={{display:'flex',gap:20}}>
+                    <div style={{width:220,flexShrink:0}}>
+                      {EMAIL_KEYS.map(k => (
+                        <button key={k} onClick={()=>{ setEmailKey(k); setEmailPreview(null) }} style={{
+                          display:'block',width:'100%',textAlign:'left',padding:'10px 12px',marginBottom:6,
+                          borderRadius:9,border:'1.5px solid var(--border)',cursor:'pointer',fontSize:12,fontWeight:emailKey===k?700:500,
+                          background:emailKey===k?'var(--blue-l)':'var(--surface2)',
+                          color:emailKey===k?'var(--blue)':'var(--text2)',
+                        }}>
+                          {emailTemplates[k]?.label || k}
+                          {!emailTemplates[k]?.enabled && <span style={{marginLeft:6,color:'var(--text4)'}}>(off)</span>}
+                        </button>
+                      ))}
+                    </div>
+                    <div style={{flex:1}}>
+                      <SectionTitle>{currentEmail.label}</SectionTitle>
+                      <ToggleRow label="Email activé" desc="Désactiver pour ne plus envoyer ce type d'email" value={currentEmail.enabled} onChange={v=>patchEmail({enabled:v})}/>
+                      <ToggleRow label="Utiliser des emojis" desc="Désactivé = texte sobre sans emoji" value={currentEmail.useEmojis} onChange={v=>patchEmail({useEmojis:v})}/>
+                      <SectionTitle>Sujet</SectionTitle>
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
+                        <div>
+                          <div style={{fontSize:11,fontWeight:600,color:'var(--text3)',marginBottom:4}}>Français</div>
+                          <input className="input" value={currentEmail.subjectFr} onChange={e=>patchEmail({subjectFr:e.target.value})}/>
+                        </div>
+                        <div>
+                          <div style={{fontSize:11,fontWeight:600,color:'var(--text3)',marginBottom:4}}>English</div>
+                          <input className="input" value={currentEmail.subjectEn} onChange={e=>patchEmail({subjectEn:e.target.value})}/>
+                        </div>
+                      </div>
+                      <SectionTitle>Corps HTML</SectionTitle>
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
+                        <div>
+                          <div style={{fontSize:11,fontWeight:600,color:'var(--text3)',marginBottom:4}}>Français</div>
+                          <textarea className="input" rows={10} value={currentEmail.bodyFr} onChange={e=>patchEmail({bodyFr:e.target.value})}
+                            style={{fontFamily:'monospace',fontSize:12,lineHeight:1.5,resize:'vertical'}}/>
+                        </div>
+                        <div>
+                          <div style={{fontSize:11,fontWeight:600,color:'var(--text3)',marginBottom:4}}>English</div>
+                          <textarea className="input" rows={10} value={currentEmail.bodyEn} onChange={e=>patchEmail({bodyEn:e.target.value})}
+                            style={{fontFamily:'monospace',fontSize:12,lineHeight:1.5,resize:'vertical'}}/>
+                        </div>
+                      </div>
+                      <div style={{padding:12,background:'var(--surface2)',borderRadius:10,marginBottom:16,fontSize:12,color:'var(--text3)'}}>
+                        <strong style={{color:'var(--text2)'}}>Variables disponibles :</strong>{' '}
+                        {(currentEmail.variables || []).map(v => (
+                          <code key={v} style={{marginRight:8,background:'var(--surface3)',padding:'2px 6px',borderRadius:4}}>{'{{'+v+'}}'}</code>
+                        ))}
+                      </div>
+                      <div style={{display:'flex',gap:10,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}>
+                        <button className="btn btn-primary" onClick={()=>loadPreview('fr')}>Aperçu FR</button>
+                        <button className="btn" onClick={()=>loadPreview('en')}>Aperçu EN</button>
+                        <input className="input" placeholder="email@test.com" value={testEmailTo} onChange={e=>setTestEmailTo(e.target.value)} style={{maxWidth:220}}/>
+                        <button className="btn" onClick={sendTest}>Envoyer test</button>
+                        {emailMsg && <span style={{fontSize:12,color:'var(--green)'}}>{emailMsg}</span>}
+                      </div>
+                      {emailPreview && (
+                        <div style={{border:'1.5px solid var(--border)',borderRadius:12,overflow:'hidden'}}>
+                          <div style={{padding:'10px 14px',background:'var(--surface2)',fontSize:12,fontWeight:600,borderBottom:'1px solid var(--border)'}}>
+                            Sujet : {emailPreview.subject}
+                          </div>
+                          <iframe title="preview" srcDoc={emailPreview.html} style={{width:'100%',height:360,border:'none',background:'#fff'}}/>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 

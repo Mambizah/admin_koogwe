@@ -194,8 +194,22 @@ export default function Dashboard() {
       if (s.value)   setStats(s.value)
       if (r.value && Array.isArray(r.value)) setRides(r.value)
       if (d.value && Array.isArray(d.value)) setDocs(d.value)
-      if (drv.value) { const list = Array.isArray(drv.value)?drv.value:(drv.value?.items??[]); setDrivers(list) }
-      if (pax.value) { const list = Array.isArray(pax.value)?pax.value:(pax.value?.items??[]); setPassengers(list) }
+      if (drv.value) {
+        const raw = Array.isArray(drv.value) ? drv.value : (drv.value?.items ?? [])
+        setDrivers(raw.map((d) => ({
+          ...d,
+          ...(d.user || {}),
+          accountStatus: d.user?.accountStatus ?? d.accountStatus,
+        })))
+      }
+      if (pax.value) {
+        const raw = Array.isArray(pax.value) ? pax.value : (pax.value?.items ?? [])
+        setPassengers(raw.map((p) => ({
+          ...p,
+          name: [p.firstName, p.lastName].filter(Boolean).join(' ') || p.email || '—',
+          totalRides: p._count?.passengerRides ?? p.totalRides ?? 0,
+        })))
+      }
       if (rev.value) setRevenue(rev.value)
       if (chartData.value?.points) {
         const pts = chartData.value.points.slice(-14)
@@ -215,19 +229,23 @@ export default function Dashboard() {
   useRealtimeSync(load, { interval: 20000, topics: ['dashboard','ride','document','panic'] })
 
   const pendingDocs   = docs.filter(d=>d.status==='PENDING')
-  const activeDrivers = drivers.filter(d=>d.accountStatus==='ACTIVE').length
-  const inactiveDrivers = drivers.length - activeDrivers
+  const activeDrivers = drivers.filter(d => d.accountStatus === 'ACTIVE').length
+  const pendingApproval = drivers.filter(d => !d.adminApproved && d.documentsUploaded).length
+  const inactiveDrivers = Math.max(0, drivers.length - activeDrivers - pendingApproval)
   const totalPassengers = passengers.length
-  const activePassengers = passengers.filter(p=>p.accountStatus==='ACTIVE').length
+  const activePassengers = passengers.filter(p => p.accountStatus === 'ACTIVE' || p.isActive).length
 
-  const dailyRevenue = revenue.paymentAmount != null ? (revenue.paymentAmount/30).toFixed(0) : stats.revenue ? (stats.revenue/30).toFixed(0) : '—'
-  const totalRevenue = revenue.paymentAmount != null ? revenue.paymentAmount.toLocaleString('fr-FR',{minimumFractionDigits:0}) : '—'
+  const revenueTotal = Number(revenue.total ?? stats.revenue?.total ?? 0)
+  const dailyRevenue = revenueTotal > 0 ? Math.round(revenueTotal / 30) : 0
+  const totalRevenue = revenueTotal > 0
+    ? revenueTotal.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+    : '0'
 
   const driverDonut = [
-    {name:'Actifs',     value: activeDrivers||1},
-    {name:'Inactifs',   value: inactiveDrivers||0},
-    {name:'En attente', value: (stats.pendingDrivers||0)},
-  ]
+    { name: 'Actifs', value: activeDrivers },
+    { name: 'Inactifs', value: inactiveDrivers },
+    { name: 'En attente', value: pendingApproval || (stats.drivers?.pending ?? 0) },
+  ].filter((s) => s.value > 0)
   const driverColors = ['#10B981','#B0C4E8','#F59E0B']
 
   // Helpers pour afficher les noms complets
@@ -249,13 +267,13 @@ export default function Dashboard() {
 
         {/* KPI Row */}
         <div className="stagger" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16,marginBottom:24}}>
-          <StatCard label="Chauffeurs actifs"  value={activeDrivers||stats.activeDrivers} sub={`${drivers.length||stats.totalDrivers||0} inscrits au total`} trend="+12%" color="#2B5FF5"
+          <StatCard label="Chauffeurs actifs"  value={activeDrivers} sub={`${drivers.length || stats.drivers?.total || 0} inscrits au total`} trend="" color="#2B5FF5"
             iconPath="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" delay={0}/>
-          <StatCard label="Passagers inscrits" value={(totalPassengers||stats.totalPassengers||'—')} sub={`${activePassengers} actifs ce mois`} trend="+8%" color="#10B981"
+          <StatCard label="Passagers inscrits" value={totalPassengers || stats.passengers?.total || 0} sub={`${activePassengers} actifs`} trend="" color="#10B981"
             iconPath="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" delay={60}/>
-          <StatCard label="Courses actives"    value={activeRides.length||stats.activeRides||0} sub={`${stats.totalRides||0} au total`} trend="+5.4%" color="#F59E0B"
+          <StatCard label="Courses actives"    value={activeRides.length || stats.rides?.active || 0} sub={`${stats.rides?.total || 0} au total`} trend="" color="#F59E0B"
             iconPath="M8 7h12m0 0l-4-4m4 4l-4 4m0 5H4m0 0l4 4m-4-4l4-4" delay={120}/>
-          <StatCard label="Revenu total"        value={`€${totalRevenue}`} sub={`€${dailyRevenue}/jour en moy.`} trend="+18%" color="#8B5CF6"
+          <StatCard label="Revenu total"        value={`€${totalRevenue}`} sub={`€${dailyRevenue}/jour en moy.`} trend="" color="#8B5CF6"
             iconPath="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" delay={180}/>
         </div>
 
@@ -310,14 +328,18 @@ export default function Dashboard() {
           {/* Drivers donut */}
           <div className="card fade-up" style={{padding:'22px',animationDelay:'260ms'}}>
             <div style={{fontWeight:700,fontSize:15,marginBottom:4}}>Répartition Chauffeurs</div>
-            <div style={{fontSize:12,color:'var(--text3)',marginBottom:16}}>{drivers.length||stats.totalDrivers||0} inscrits</div>
+            <div style={{fontSize:12,color:'var(--text3)',marginBottom:16}}>{drivers.length || stats.drivers?.total || 0} inscrits</div>
             <div style={{display:'flex',alignItems:'center',gap:16}}>
+              {driverDonut.length > 0 ? (
               <DonutChart data={driverDonut} colors={driverColors}/>
+              ) : (
+              <div style={{width:120,height:120,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,color:'var(--text4)'}}>Aucun</div>
+              )}
               <div style={{flex:1}}>
                 {[
                   {label:'Actifs',     value:activeDrivers,           color:'#10B981'},
                   {label:'Inactifs',   value:inactiveDrivers,         color:'#B0C4E8'},
-                  {label:'En attente', value:stats.pendingDrivers||0,  color:'#F59E0B'},
+                  {label:'En attente', value: pendingApproval || stats.drivers?.pending || 0, color:'#F59E0B'},
                 ].map(({label,value,color})=>(
                   <div key={label} style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
                     <div style={{display:'flex',alignItems:'center',gap:7}}>
